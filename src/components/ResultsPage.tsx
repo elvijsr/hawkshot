@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, AlertTriangle, Copy, Check, FileText, BarChart3, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
+import { ArrowLeft, AlertTriangle, Copy, Check, FileText, BarChart3, ChevronDown, ChevronUp, ExternalLink, Star, Briefcase } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./ui/collapsible";
 import { TrustScoreDial } from "./TrustScoreDial";
 import { RiskLabel } from "./RiskLabel";
@@ -11,13 +11,15 @@ interface ResultsPageProps {
   assessment: AssessmentData;
   rawApiResponse?: unknown;
   responseTimestamp?: string | null;
+  fetchTime?: number | null;
   onBack: () => void;
 }
 
-export function ResultsPage({ assessment, rawApiResponse, responseTimestamp, onBack }: ResultsPageProps) {
+export function ResultsPage({ assessment, rawApiResponse, responseTimestamp, fetchTime, onBack }: ResultsPageProps) {
   const [copied, setCopied] = useState(false);
   const [rawJsonOpen, setRawJsonOpen] = useState(false);
   const [completeReportOpen, setCompleteReportOpen] = useState(false);
+  const [logoError, setLogoError] = useState(false);
   
   // Safely access fields with fallbacks - check rawApiResponse first since it has the actual data
   // Then fall back to assessment object
@@ -51,6 +53,8 @@ export function ResultsPage({ assessment, rawApiResponse, responseTimestamp, onB
                  data?.domain || 
                  (assessment as any)?.website ||
                  (assessment as any)?.domain || "";
+  const logoUrl = data?.logo || (assessment as any)?.logo || "";
+  const logo = logoUrl && logoUrl.trim() !== "" ? logoUrl : null;
   const category = data?.category || 
                    data?.controlsEvidence?.category ||
                    (assessment as any)?.category || 
@@ -64,6 +68,11 @@ export function ResultsPage({ assessment, rawApiResponse, responseTimestamp, onB
   const securityEvidence = data?.securityEvidence || (assessment as any)?.securityEvidence || {};
   const cveStats = data?.cveStats || (assessment as any)?.cveStats || {};
   const controlsEvidence = data?.controlsEvidence || (assessment as any)?.controlsEvidence || {};
+  
+  // Extract new fields from controlsEvidence
+  const usage = controlsEvidence?.usage || "";
+  const description = controlsEvidence?.description || "";
+  const vendorReputation = controlsEvidence?.vendor_reputation || "";
   
   // Calculate risk label from trust score if not provided
   const riskLabel = (assessment as any)?.risk_label || 
@@ -84,6 +93,14 @@ export function ResultsPage({ assessment, rawApiResponse, responseTimestamp, onB
         minute: '2-digit'
       })
     : null;
+
+  // Format fetch time as seconds.tenths
+  const formatFetchTime = (seconds: number | null | undefined): string | null => {
+    if (seconds === null || seconds === undefined) return null;
+    const wholeSeconds = Math.floor(seconds);
+    const tenths = Math.floor((seconds - wholeSeconds) * 10);
+    return `${wholeSeconds}.${tenths}s`;
+  };
 
   const handleCopyJson = async () => {
     if (!rawApiResponse) return;
@@ -125,6 +142,22 @@ export function ResultsPage({ assessment, rawApiResponse, responseTimestamp, onB
           <div className="mb-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
               <div className="flex items-center gap-4 flex-wrap">
+                {logo && !logoError && (
+                  <div className="flex-shrink-0">
+                    <img 
+                      src={logo} 
+                      alt={`${appName} logo`}
+                      className="h-12 w-12 object-contain rounded-lg border border-gray-200 bg-white p-1"
+                      referrerPolicy="no-referrer"
+                      onError={() => {
+                        setLogoError(true);
+                      }}
+                      onLoad={() => {
+                        setLogoError(false);
+                      }}
+                    />
+                  </div>
+                )}
                 <h1 className="text-3xl font-bold text-gray-900">{appName}</h1>
                 {category && (
                   <span className="inline-flex items-center rounded-full bg-blue-50 border border-blue-100 px-3 py-1.5 text-sm font-medium text-blue-700">
@@ -132,11 +165,18 @@ export function ResultsPage({ assessment, rawApiResponse, responseTimestamp, onB
                   </span>
                 )}
               </div>
-              {formattedDate && (
-                <p className="text-sm text-gray-500 sm:mt-0">
-                  Data fetched: {formattedDate}
-                </p>
-              )}
+              <div className="flex flex-col sm:items-end gap-1">
+                {formattedDate && (
+                  <p className="text-sm text-gray-500 sm:mt-0">
+                    Data fetched: {formattedDate}
+                  </p>
+                )}
+                {fetchTime !== null && fetchTime !== undefined && (
+                  <p className="text-xs text-gray-400">
+                    Fetched in {formatFetchTime(fetchTime)}
+                  </p>
+                )}
+              </div>
             </div>
             {domain && (
               <a 
@@ -150,6 +190,38 @@ export function ResultsPage({ assessment, rawApiResponse, responseTimestamp, onB
               </a>
             )}
             {vendorName && <p className="text-lg text-gray-600">{vendorName}</p>}
+
+            {/* Usage */}
+            {usage && (
+                  <div className="inline-flex items-center gap-2 rounded-lg bg-slate-50 border border-slate-100 p-2">
+                    <Briefcase className="h-4 w-4 text-slate-600" />
+                    <span className="text-sm font-medium text-slate-700">Meant for {usage}</span>
+                  </div>
+                )}
+            
+            {/* Description */}
+            {description && (
+              <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-2">
+                <p className="text-base text-gray-700 leading-relaxed">{description}</p>
+              </div>
+            )}
+
+            {/* Vendor Reputation */}
+            {vendorReputation && (
+              <div className="mt-4">
+                <div className="rounded-lg border border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50 p-2">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 rounded-full bg-amber-100 p-2">
+                      <Star className="h-5 w-5 text-amber-600 fill-amber-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-amber-900 mb-1">Vendor Reputation</h3>
+                      <p className="text-sm text-amber-800 leading-relaxed">{vendorReputation}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Trust Score and Score Breakdown Section */}

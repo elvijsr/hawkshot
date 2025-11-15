@@ -11,11 +11,13 @@ export default function App() {
   const [currentAssessment, setCurrentAssessment] = useState<AssessmentData | null>(null);
   const [rawApiResponse, setRawApiResponse] = useState<unknown>(null);
   const [responseTimestamp, setResponseTimestamp] = useState<string | null>(null);
+  const [fetchTime, setFetchTime] = useState<number | null>(null);
 
-  const handleAssess = (assessment: AssessmentData, rawResponse?: unknown, timestamp?: string) => {
+  const handleAssess = (assessment: AssessmentData, rawResponse?: unknown, timestamp?: string, time?: number) => {
     setCurrentAssessment(assessment);
     setRawApiResponse(rawResponse || null);
     setResponseTimestamp(timestamp || null);
+    setFetchTime(time || null);
     setCurrentPage("results");
   };
 
@@ -35,6 +37,7 @@ export default function App() {
           assessment={currentAssessment} 
           rawApiResponse={rawApiResponse}
           responseTimestamp={responseTimestamp}
+          fetchTime={fetchTime}
           onBack={handleGoHome} 
         />
       )}
