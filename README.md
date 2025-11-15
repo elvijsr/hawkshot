@@ -1,7 +1,7 @@
 
-  # TrustScore Mock Frontend
+  # HawkShot
 
-  This is a code bundle for TrustScore Mock Frontend. The original project is available at https://www.figma.com/design/J4B5VpEo7na32KquqdM4Sc/TrustScore-Mock-Frontend.
+  Security assessment platform for evaluating the safety and trustworthiness of SaaS products. Get comprehensive trust scores based on vendor reputation, vulnerabilities, compliance, and security controls.
 
   ## Running the code
 

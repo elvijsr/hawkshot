@@ -1,3 +1,4 @@
+import React from "react";
 import { ArrowLeft, AlertTriangle } from "lucide-react";
 import { TrustScoreDial } from "./TrustScoreDial";
 import { RiskLabel } from "./RiskLabel";
@@ -27,9 +28,9 @@ export function ResultsPage({ assessment, onBack }: ResultsPageProps) {
         {/* Header Section */}
         <div className="mb-8 rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
           <div className="mb-6">
-            <h1 className="mb-2 text-gray-900">{assessment.app_name}</h1>
-            <p className="text-gray-600">{assessment.vendor_name}</p>
-            <span className="mt-2 inline-block rounded-full bg-blue-50 px-3 py-1 text-sm text-blue-700">
+            <h1 className="mb-2 text-3xl font-bold text-gray-900">{assessment.app_name}</h1>
+            <p className="text-lg text-gray-600">{assessment.vendor_name}</p>
+            <span className="mt-3 inline-block rounded-full bg-blue-50 border border-blue-100 px-3 py-1.5 text-sm font-medium text-blue-700">
               {assessment.category}
             </span>
           </div>
@@ -37,7 +38,7 @@ export function ResultsPage({ assessment, onBack }: ResultsPageProps) {
           {/* Trust Score Section */}
           <div className="flex flex-col items-center gap-6 border-t border-gray-100 pt-8">
             <div className="text-center">
-              <h2 className="mb-2 text-gray-900">Trust Score</h2>
+              <h2 className="mb-2 text-2xl font-semibold text-gray-900">Trust Score</h2>
               <p className="text-sm text-gray-600">
                 Overall security and trustworthiness assessment
               </p>
@@ -73,23 +74,23 @@ export function ResultsPage({ assessment, onBack }: ResultsPageProps) {
 
         {/* Score Breakdown */}
         <div className="mb-8 rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
-          <h2 className="mb-6 text-gray-900">Score Breakdown</h2>
+          <h2 className="mb-6 text-xl font-semibold text-gray-900">Score Breakdown</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {Object.entries(assessment.scoring_breakdown).map(([key, value]) => {
               const percentage = Math.round(value * 100);
               const color = value >= 0.7 ? "bg-green-500" : value >= 0.4 ? "bg-orange-400" : "bg-red-500";
               
               return (
-                <div key={key} className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                <div key={key} className="rounded-lg border border-gray-200 bg-gray-50 p-4 hover:shadow-sm transition-shadow">
                   <div className="mb-2 flex items-center justify-between">
-                    <span className="text-sm capitalize text-gray-700">
+                    <span className="text-sm font-medium capitalize text-gray-700">
                       {key.replace(/_/g, " ")}
                     </span>
-                    <span className="text-gray-900">{percentage}%</span>
+                    <span className="text-base font-semibold text-gray-900">{percentage}%</span>
                   </div>
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
+                  <div className="h-2.5 w-full overflow-hidden rounded-full bg-gray-200">
                     <div
-                      className={`h-full ${color} transition-all duration-1000`}
+                      className={`h-full ${color} transition-all duration-1000 ease-out`}
                       style={{ width: `${percentage}%` }}
                     />
                   </div>
@@ -101,7 +102,7 @@ export function ResultsPage({ assessment, onBack }: ResultsPageProps) {
 
         {/* Detailed Assessment */}
         <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
-          <h2 className="mb-6 text-gray-900">Detailed Assessment</h2>
+          <h2 className="mb-6 text-xl font-semibold text-gray-900">Detailed Assessment</h2>
           <MarkdownRenderer content={assessment.brief_markdown} />
         </div>
       </div>

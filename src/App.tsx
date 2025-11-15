@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Header } from "./components/Header";
 import { HomePage } from "./components/HomePage";
 import { ResultsPage } from "./components/ResultsPage";
@@ -33,7 +33,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gray-50">
       <Header currentPage={currentPage} onNavigate={handleNavigate} />
       
       {currentPage === "home" && <HomePage onAssess={handleAssess} />}

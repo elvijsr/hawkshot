@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Search, Sparkles } from "lucide-react";
 import type { AssessmentData } from "../utils/mockApi";
 
@@ -39,24 +39,24 @@ export function HomePage({ onAssess }: HomePageProps) {
   ];
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white px-4">
+    <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center bg-gradient-to-b from-blue-50/50 via-white to-gray-50 px-4 py-12">
       <div className="w-full max-w-3xl">
-        <div className="mb-8 text-center">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-blue-100 px-4 py-2 text-sm text-blue-700">
+        <div className="mb-10 text-center">
+          <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-blue-50 border border-blue-100 px-4 py-2 text-sm font-medium text-blue-700">
             <Sparkles className="h-4 w-4" />
             Evidence-Based Security Assessment
           </div>
-          <h1 className="mb-4 text-gray-900">
+          <h1 className="mb-4 text-4xl font-bold text-gray-900 tracking-tight">
             Evaluate the Safety of Any SaaS Product
           </h1>
-          <p className="text-gray-600">
+          <p className="text-lg text-gray-600 leading-relaxed max-w-2xl mx-auto">
             Get comprehensive trust scores based on vendor reputation, vulnerabilities,
             compliance, and security controls.
           </p>
         </div>
 
         <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-lg">
-          <label htmlFor="product-input" className="mb-2 block text-sm text-gray-700">
+          <label htmlFor="product-input" className="mb-3 block text-sm font-medium text-gray-700">
             Product Name or GitHub URL
           </label>
           <div className="flex gap-3">
@@ -69,26 +69,26 @@ export function HomePage({ onAssess }: HomePageProps) {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="e.g., Slack, or https://github.com/vercel/next.js"
-                className="w-full rounded-lg border border-gray-300 bg-white py-3 pl-12 pr-4 text-gray-900 placeholder-gray-400 transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                className="w-full rounded-lg border border-gray-300 bg-white py-3 pl-12 pr-4 text-gray-900 placeholder-gray-400 transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 disabled={loading}
               />
             </div>
             <button
               onClick={handleAssess}
               disabled={!input.trim() || loading}
-              className="rounded-lg bg-blue-600 px-8 py-3 text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-lg bg-blue-600 px-8 py-3 font-medium text-white shadow-sm transition-all hover:bg-blue-700 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? "Assessing..." : "Assess"}
             </button>
           </div>
 
-          <div className="mt-6 flex flex-wrap gap-2">
-            <span className="text-sm text-gray-600">Try:</span>
+          <div className="mt-6 flex flex-wrap items-center gap-2">
+            <span className="text-sm text-gray-500">Try:</span>
             {examples.map((example) => (
               <button
                 key={example.label}
                 onClick={() => setInput(example.value)}
-                className="rounded-full border border-gray-300 bg-white px-3 py-1 text-sm text-gray-700 transition-colors hover:border-blue-500 hover:bg-blue-50 hover:text-blue-700"
+                className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-all hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
               >
                 {example.label}
               </button>
@@ -97,24 +97,24 @@ export function HomePage({ onAssess }: HomePageProps) {
         </div>
 
         <div className="mt-12 grid gap-6 sm:grid-cols-3">
-          <div className="rounded-lg bg-white p-6 shadow-sm border border-gray-200">
-            <div className="mb-2 text-2xl">🔍</div>
-            <h3 className="mb-2 text-gray-900">Deep Analysis</h3>
-            <p className="text-sm text-gray-600">
+          <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+            <div className="mb-3 text-3xl">🔍</div>
+            <h3 className="mb-2 text-lg font-semibold text-gray-900">Deep Analysis</h3>
+            <p className="text-sm text-gray-600 leading-relaxed">
               Comprehensive evaluation of security posture, compliance, and risk factors
             </p>
           </div>
-          <div className="rounded-lg bg-white p-6 shadow-sm border border-gray-200">
-            <div className="mb-2 text-2xl">📊</div>
-            <h3 className="mb-2 text-gray-900">Evidence-Based</h3>
-            <p className="text-sm text-gray-600">
+          <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+            <div className="mb-3 text-3xl">📊</div>
+            <h3 className="mb-2 text-lg font-semibold text-gray-900">Evidence-Based</h3>
+            <p className="text-sm text-gray-600 leading-relaxed">
               Scores derived from public data, CVEs, incidents, and compliance certifications
             </p>
           </div>
-          <div className="rounded-lg bg-white p-6 shadow-sm border border-gray-200">
-            <div className="mb-2 text-2xl">⚡</div>
-            <h3 className="mb-2 text-gray-900">Instant Results</h3>
-            <p className="text-sm text-gray-600">
+          <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+            <div className="mb-3 text-3xl">⚡</div>
+            <h3 className="mb-2 text-lg font-semibold text-gray-900">Instant Results</h3>
+            <p className="text-sm text-gray-600 leading-relaxed">
               Get detailed security assessments and trust scores in seconds
             </p>
           </div>

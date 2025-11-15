@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Search, ArrowLeft } from "lucide-react";
 import { LoadingState } from "./LoadingState";
 import { AssessmentCard } from "./AssessmentCard";
@@ -59,8 +59,8 @@ export function ComparePage({ onBack }: ComparePageProps) {
         </button>
 
         <div className="mb-8 text-center">
-          <h1 className="mb-4 text-gray-900">Compare Products</h1>
-          <p className="text-gray-600">
+          <h1 className="mb-4 text-3xl font-bold text-gray-900">Compare Products</h1>
+          <p className="text-lg text-gray-600">
             Compare trust scores and security features of two products side-by-side
           </p>
         </div>
@@ -109,19 +109,19 @@ export function ComparePage({ onBack }: ComparePageProps) {
             <button
               onClick={handleCompare}
               disabled={!inputA.trim() || !inputB.trim() || loading}
-              className="mt-6 w-full rounded-lg bg-blue-600 py-3 text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-6 w-full rounded-lg bg-blue-600 py-3 font-medium text-white shadow-sm transition-all hover:bg-blue-700 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? "Comparing..." : "Compare Products"}
             </button>
 
-            <div className="mt-6 flex flex-wrap gap-2">
-              <span className="text-sm text-gray-600">Quick compare:</span>
+            <div className="mt-6 flex flex-wrap items-center gap-2">
+              <span className="text-sm text-gray-500">Quick compare:</span>
               <button
                 onClick={() => {
                   setInputA("Slack");
                   setInputB("Notion");
                 }}
-                className="rounded-full border border-gray-300 bg-white px-3 py-1 text-sm text-gray-700 transition-colors hover:border-blue-500 hover:bg-blue-50 hover:text-blue-700"
+                className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-all hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
               >
                 Slack vs Notion
               </button>
@@ -140,10 +140,10 @@ export function ComparePage({ onBack }: ComparePageProps) {
         {showResults && (
           <>
             <div className="mb-6 flex justify-between items-center">
-              <h2 className="text-gray-900">Comparison Results</h2>
+              <h2 className="text-xl font-semibold text-gray-900">Comparison Results</h2>
               <button
                 onClick={handleReset}
-                className="rounded-lg bg-gray-100 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-200"
+                className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-gray-200"
               >
                 New Comparison
               </button>
@@ -156,11 +156,11 @@ export function ComparePage({ onBack }: ComparePageProps) {
 
             {/* Comparison Summary */}
             <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
-              <h3 className="mb-4 text-gray-900">Summary</h3>
+              <h3 className="mb-4 text-lg font-semibold text-gray-900">Summary</h3>
               <div className="space-y-3">
-                <div className="flex items-center justify-between rounded-lg bg-gray-50 p-4">
-                  <span className="text-gray-700">Higher Trust Score</span>
-                  <span className="text-gray-900">
+                <div className="flex items-center justify-between rounded-lg bg-gray-50 p-4 hover:bg-gray-100 transition-colors">
+                  <span className="text-sm font-medium text-gray-700">Higher Trust Score</span>
+                  <span className="text-sm font-semibold text-gray-900">
                     {assessmentA.trust_score > assessmentB.trust_score
                       ? assessmentA.app_name
                       : assessmentB.trust_score > assessmentA.trust_score
@@ -168,9 +168,9 @@ export function ComparePage({ onBack }: ComparePageProps) {
                       : "Tied"}
                   </span>
                 </div>
-                <div className="flex items-center justify-between rounded-lg bg-gray-50 p-4">
-                  <span className="text-gray-700">Higher Confidence</span>
-                  <span className="text-gray-900">
+                <div className="flex items-center justify-between rounded-lg bg-gray-50 p-4 hover:bg-gray-100 transition-colors">
+                  <span className="text-sm font-medium text-gray-700">Higher Confidence</span>
+                  <span className="text-sm font-semibold text-gray-900">
                     {assessmentA.confidence > assessmentB.confidence
                       ? assessmentA.app_name
                       : assessmentB.confidence > assessmentA.confidence
@@ -178,9 +178,9 @@ export function ComparePage({ onBack }: ComparePageProps) {
                       : "Tied"}
                   </span>
                 </div>
-                <div className="flex items-center justify-between rounded-lg bg-gray-50 p-4">
-                  <span className="text-gray-700">Better Evidence Coverage</span>
-                  <span className="text-gray-900">
+                <div className="flex items-center justify-between rounded-lg bg-gray-50 p-4 hover:bg-gray-100 transition-colors">
+                  <span className="text-sm font-medium text-gray-700">Better Evidence Coverage</span>
+                  <span className="text-sm font-semibold text-gray-900">
                     {assessmentA.evidence_coverage > assessmentB.evidence_coverage
                       ? assessmentA.app_name
                       : assessmentB.evidence_coverage > assessmentA.evidence_coverage
