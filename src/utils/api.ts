@@ -30,18 +30,6 @@ const getWebhookUrl = (): string => {
 };
 
 /**
- * Check if a string is a URL
- */
-const isUrl = (str: string): boolean => {
-  try {
-    new URL(str);
-    return true;
-  } catch {
-    return false;
-  }
-};
-
-/**
  * Assess a product by name or URL
  * @param input - Product name, domain, or URL (e.g., "Slack", "slack.com", or "https://github.com/vercel/next.js")
  * @returns Assessment data
@@ -50,10 +38,8 @@ const isUrl = (str: string): boolean => {
 export const assessProduct = async (input: string): Promise<AssessmentData> => {
   const webhookUrl = getWebhookUrl();
 
-  // Determine if input is a URL or a query (domain/app name)
-  const requestBody = isUrl(input)
-    ? { url: input }
-    : { query: input };
+  // Always use "query" as the parameter name
+  const requestBody = { query: input };
 
   try {
     const response = await fetch(webhookUrl, {
