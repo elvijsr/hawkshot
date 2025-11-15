@@ -158,6 +158,39 @@
     background: linear-gradient(to top, #dbeafe 0%, #eff6ff 25%, #ffffff 60%, #f9fafb 100%) !important;
   }
   
+  .bg-homepage-gradient-loading {
+    position: relative;
+    background: linear-gradient(to top, #dbeafe 0%, #eff6ff 25%, #ffffff 60%, #f9fafb 100%) !important;
+    overflow: hidden;
+  }
+  
+  .bg-homepage-gradient-loading::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to top, #93c5fd 0%, #60a5fa 20%, #3b82f6 40%, #f9fafb 100%);
+    opacity: 0;
+    animation: gentle-pulse 2.5s ease-in-out infinite;
+    z-index: 0;
+  }
+  
+  .bg-homepage-gradient-loading > * {
+    position: relative;
+    z-index: 1;
+  }
+  
+  @keyframes gentle-pulse {
+    0%, 100% {
+      opacity: 0;
+    }
+    50% {
+      opacity: 0.3;
+    }
+  }
+  
   @keyframes progress {
     0% {
       width: 0%;

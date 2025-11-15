@@ -48,12 +48,14 @@ export function HomePage({ onAssess }: HomePageProps) {
   ];
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center bg-homepage-gradient p-4 w-full">
+    <div className={`flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center p-4 w-full transition-all duration-500 ${
+      loading ? 'bg-homepage-gradient-loading' : 'bg-homepage-gradient'
+    }`}>
       <div className="w-full max-w-3xl space-y-4">
         <div className="mb-10 text-center gap-2">
           <div className="mb-5 inline-flex items-center gap-3 justify-center">
             <div className="text-2xl font-semibold">
-              Evaluate the Safety of Any SaaS Product
+              Evaluate the Safety of Any Software Product
             </div>
           </div>
         </div>
