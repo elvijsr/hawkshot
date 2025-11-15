@@ -140,6 +140,42 @@
     font-family: "Zalando Sans Expanded", system-ui, -apple-system, sans-serif;
     font-weight: 600;
   }
+  
+  .font-bayon {
+    font-family: "Bayon", system-ui, -apple-system, sans-serif;
+    font-weight: 400;
+  }
+  
+  .bg-black {
+    background-color: #000000;
+  }
+  
+  .bg-slate-800 {
+    background-color: #1e293b;
+  }
+  
+  .bg-homepage-gradient {
+    background: linear-gradient(to top, #dbeafe 0%, #eff6ff 25%, #ffffff 60%, #f9fafb 100%) !important;
+  }
+  
+  @keyframes progress {
+    0% {
+      width: 0%;
+      transform: translateX(0);
+    }
+    50% {
+      width: 70%;
+      transform: translateX(0);
+    }
+    100% {
+      width: 100%;
+      transform: translateX(0);
+    }
+  }
+  
+  .animate-progress {
+    animation: progress 2s ease-in-out infinite;
+  }
 }
 
 /**

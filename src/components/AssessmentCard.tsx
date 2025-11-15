@@ -1,7 +1,7 @@
 import { Check, X } from "lucide-react";
 import { TrustScoreDial } from "./TrustScoreDial";
 import { RiskLabel } from "./RiskLabel";
-import type { AssessmentData } from "../utils/mockApi";
+import type { AssessmentData } from "../utils/api";
 
 interface AssessmentCardProps {
   assessment: AssessmentData;
