@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Search, Sparkles } from "lucide-react";
 import type { AssessmentData } from "../utils/mockApi";
 
@@ -41,14 +41,11 @@ export function HomePage({ onAssess }: HomePageProps) {
   return (
     <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center bg-gradient-to-b from-blue-50/50 via-white to-gray-50 px-4 py-12">
       <div className="w-full max-w-3xl">
-        <div className="mb-10 text-center">
+        <div className="mb-10 text-center space-y-2">
           <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-blue-50 border border-blue-100 px-4 py-2 text-sm font-medium text-blue-700">
             <Sparkles className="h-4 w-4" />
-            Evidence-Based Security Assessment
-          </div>
-          <h1 className="mb-4 text-4xl font-bold text-gray-900 tracking-tight">
             Evaluate the Safety of Any SaaS Product
-          </h1>
+          </div>
           <p className="text-lg text-gray-600 leading-relaxed max-w-2xl mx-auto">
             Get comprehensive trust scores based on vendor reputation, vulnerabilities,
             compliance, and security controls.
@@ -57,7 +54,7 @@ export function HomePage({ onAssess }: HomePageProps) {
 
         <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-lg">
           <label htmlFor="product-input" className="mb-3 block text-sm font-medium text-gray-700">
-            Product Name or GitHub URL
+            Product Name or URL
           </label>
           <div className="flex gap-3">
             <div className="relative flex-1">
@@ -97,21 +94,21 @@ export function HomePage({ onAssess }: HomePageProps) {
         </div>
 
         <div className="mt-12 grid gap-6 sm:grid-cols-3">
-          <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+          <div className="rounded-xl bg-white p-6 border border-gray-200">
             <div className="mb-3 text-3xl">🔍</div>
             <h3 className="mb-2 text-lg font-semibold text-gray-900">Deep Analysis</h3>
             <p className="text-sm text-gray-600 leading-relaxed">
               Comprehensive evaluation of security posture, compliance, and risk factors
             </p>
           </div>
-          <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+          <div className="rounded-xl bg-white p-6 border border-gray-200">
             <div className="mb-3 text-3xl">📊</div>
             <h3 className="mb-2 text-lg font-semibold text-gray-900">Evidence-Based</h3>
             <p className="text-sm text-gray-600 leading-relaxed">
               Scores derived from public data, CVEs, incidents, and compliance certifications
             </p>
           </div>
-          <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+          <div className="rounded-xl bg-white p-6 border border-gray-200">
             <div className="mb-3 text-3xl">⚡</div>
             <h3 className="mb-2 text-lg font-semibold text-gray-900">Instant Results</h3>
             <p className="text-sm text-gray-600 leading-relaxed">

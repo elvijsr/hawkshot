@@ -1,4 +1,3 @@
-import React from "react";
 import { ArrowLeft, AlertTriangle } from "lucide-react";
 import { TrustScoreDial } from "./TrustScoreDial";
 import { RiskLabel } from "./RiskLabel";
@@ -26,7 +25,7 @@ export function ResultsPage({ assessment, onBack }: ResultsPageProps) {
         </button>
 
         {/* Header Section */}
-        <div className="mb-8 rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
+        <div className="mb-8 rounded-xl border border-gray-200 bg-white p-8">
           <div className="mb-6">
             <h1 className="mb-2 text-3xl font-bold text-gray-900">{assessment.app_name}</h1>
             <p className="text-lg text-gray-600">{assessment.vendor_name}</p>
@@ -78,10 +77,31 @@ export function ResultsPage({ assessment, onBack }: ResultsPageProps) {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {Object.entries(assessment.scoring_breakdown).map(([key, value]) => {
               const percentage = Math.round(value * 100);
-              const color = value >= 0.7 ? "bg-green-500" : value >= 0.4 ? "bg-orange-400" : "bg-red-500";
+              const isHigh = value >= 0.7;
+              const isMedium = value >= 0.4 && value < 0.7;
+              
+              // All metrics follow the same logic: high = good (green), low = bad (red)
+              const barColor = isHigh
+                ? "bg-green-500"
+                : isMedium
+                ? "bg-orange-400"
+                : "bg-red-500";
+              const bgColor = isHigh
+                ? "bg-green-50"
+                : isMedium
+                ? "bg-orange-50"
+                : "bg-red-50";
+              const borderColor = isHigh
+                ? "border-green-200"
+                : isMedium
+                ? "border-orange-200"
+                : "border-red-200";
               
               return (
-                <div key={key} className="rounded-lg border border-gray-200 bg-gray-50 p-4 hover:shadow-sm transition-shadow">
+                <div
+                  key={key}
+                  className={`rounded-lg border ${borderColor} ${bgColor} p-4 transition-shadow hover:shadow-md`}
+                >
                   <div className="mb-2 flex items-center justify-between">
                     <span className="text-sm font-medium capitalize text-gray-700">
                       {key.replace(/_/g, " ")}
@@ -90,7 +110,7 @@ export function ResultsPage({ assessment, onBack }: ResultsPageProps) {
                   </div>
                   <div className="h-2.5 w-full overflow-hidden rounded-full bg-gray-200">
                     <div
-                      className={`h-full ${color} transition-all duration-1000 ease-out`}
+                      className={`h-full ${barColor} transition-all duration-1000 ease-out`}
                       style={{ width: `${percentage}%` }}
                     />
                   </div>
@@ -101,7 +121,7 @@ export function ResultsPage({ assessment, onBack }: ResultsPageProps) {
         </div>
 
         {/* Detailed Assessment */}
-        <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
+        <div className="rounded-xl border border-gray-200 bg-white p-8">
           <h2 className="mb-6 text-xl font-semibold text-gray-900">Detailed Assessment</h2>
           <MarkdownRenderer content={assessment.brief_markdown} />
         </div>
