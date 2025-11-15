@@ -4,7 +4,7 @@ import type { AssessmentData } from "../utils/api";
 import { assessProduct, type ApiError } from "../utils/api";
 
 interface HomePageProps {
-  onAssess: (assessment: AssessmentData, rawResponse?: unknown) => void;
+  onAssess: (assessment: AssessmentData, rawResponse?: unknown, responseTimestamp?: string) => void;
 }
 
 export function HomePage({ onAssess }: HomePageProps) {
@@ -22,7 +22,9 @@ export function HomePage({ onAssess }: HomePageProps) {
       const result = await assessProduct(input);
       // Get raw response from the result if available, otherwise use result itself
       const rawResponse = (result as any)._rawResponse || result;
-      onAssess(result, rawResponse);
+      // Capture the timestamp when response is received
+      const responseTimestamp = new Date().toISOString();
+      onAssess(result, rawResponse, responseTimestamp);
     } catch (err) {
       console.error("Assessment failed:", err);
       const apiError = err as ApiError;

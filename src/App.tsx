@@ -10,10 +10,12 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>("home");
   const [currentAssessment, setCurrentAssessment] = useState<AssessmentData | null>(null);
   const [rawApiResponse, setRawApiResponse] = useState<unknown>(null);
+  const [responseTimestamp, setResponseTimestamp] = useState<string | null>(null);
 
-  const handleAssess = (assessment: AssessmentData, rawResponse?: unknown) => {
+  const handleAssess = (assessment: AssessmentData, rawResponse?: unknown, timestamp?: string) => {
     setCurrentAssessment(assessment);
     setRawApiResponse(rawResponse || null);
+    setResponseTimestamp(timestamp || null);
     setCurrentPage("results");
   };
 
@@ -32,6 +34,7 @@ export default function App() {
         <ResultsPage 
           assessment={currentAssessment} 
           rawApiResponse={rawApiResponse}
+          responseTimestamp={responseTimestamp}
           onBack={handleGoHome} 
         />
       )}

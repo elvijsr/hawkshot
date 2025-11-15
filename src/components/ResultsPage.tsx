@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, AlertTriangle, Copy, Check, FileText, BarChart3, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, AlertTriangle, Copy, Check, FileText, BarChart3, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./ui/collapsible";
 import { TrustScoreDial } from "./TrustScoreDial";
 import { RiskLabel } from "./RiskLabel";
@@ -10,10 +10,11 @@ import type { AssessmentData } from "../utils/api";
 interface ResultsPageProps {
   assessment: AssessmentData;
   rawApiResponse?: unknown;
+  responseTimestamp?: string | null;
   onBack: () => void;
 }
 
-export function ResultsPage({ assessment, rawApiResponse, onBack }: ResultsPageProps) {
+export function ResultsPage({ assessment, rawApiResponse, responseTimestamp, onBack }: ResultsPageProps) {
   const [copied, setCopied] = useState(false);
   const [rawJsonOpen, setRawJsonOpen] = useState(false);
   const [completeReportOpen, setCompleteReportOpen] = useState(false);
@@ -29,7 +30,7 @@ export function ResultsPage({ assessment, rawApiResponse, onBack }: ResultsPageP
                      (assessment as any)?.vendor_name || "";
   
   // Try multiple field name variations for app name (supporting both old and new JSON structures)
-  // If product is null/empty, fall back to vendor name
+  // If product is null/empty, fall back to vendor name, then query
   const productName = data?.product || 
                       data?.appName || 
                       data?.app_name || 
@@ -38,15 +39,22 @@ export function ResultsPage({ assessment, rawApiResponse, onBack }: ResultsPageP
                       (assessment as any)?.app_name || 
                       null;
   
+  const query = data?.query || (assessment as any)?.query || "";
+  
   const appName = (productName && productName !== null && productName !== "") 
                   ? productName 
-                  : (vendorName || "Unknown Product");
+                  : (vendorName && vendorName !== null && vendorName !== "")
+                  ? vendorName
+                  : (query || "Unknown Product");
   
   const domain = data?.website || 
                  data?.domain || 
                  (assessment as any)?.website ||
                  (assessment as any)?.domain || "";
-  const category = data?.category || (assessment as any)?.category || "";
+  const category = data?.category || 
+                   data?.controlsEvidence?.category ||
+                   (assessment as any)?.category || 
+                   (assessment as any)?.controlsEvidence?.category || "";
   const trustScore = data?.trust_score ?? (assessment as any)?.trust_score ?? 0;
   const confidence = data?.confidence ?? (assessment as any)?.confidence ?? 0;
   const evidenceCoverage = data?.evidence_coverage ?? (assessment as any)?.evidence_coverage ?? 0;
@@ -64,6 +72,19 @@ export function ResultsPage({ assessment, rawApiResponse, onBack }: ResultsPageP
   const showLowEvidenceWarning = evidenceCoverage > 0 && evidenceCoverage < 0.5;
   const hasScoringBreakdown = scoringBreakdown && Object.keys(scoringBreakdown).length > 0;
 
+  // Get the date to display - use created_at from JSON if available, otherwise use response timestamp
+  const createdAt = data?.created_at || (assessment as any)?.created_at;
+  const dateToDisplay = createdAt || responseTimestamp;
+  const formattedDate = dateToDisplay 
+    ? new Date(dateToDisplay).toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    : null;
+
   const handleCopyJson = async () => {
     if (!rawApiResponse) return;
     
@@ -79,6 +100,15 @@ export function ResultsPage({ assessment, rawApiResponse, onBack }: ResultsPageP
 
   const jsonString = rawApiResponse ? JSON.stringify(rawApiResponse, null, 2) : "";
 
+  // Format URL for display - add https:// if protocol is missing
+  const formatUrl = (url: string): string => {
+    if (!url) return "";
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      return url;
+    }
+    return `https://${url}`;
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
@@ -93,62 +123,58 @@ export function ResultsPage({ assessment, rawApiResponse, onBack }: ResultsPageP
         {/* Header Section */}
         <div className="mb-8 rounded-xl border border-gray-200 bg-white p-8">
           <div className="mb-6">
-            <h1 className="mb-2 text-3xl font-bold text-gray-900">{appName}</h1>
-            {domain && <p className="text-lg text-gray-600">{domain}</p>}
-            {vendorName && <p className="text-lg text-gray-600">{vendorName}</p>}
-            {category && (
-              <span className="mt-3 inline-block rounded-full bg-blue-50 border border-blue-100 px-3 py-1.5 text-sm font-medium text-blue-700">
-                {category}
-              </span>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
+              <div className="flex items-center gap-4 flex-wrap">
+                <h1 className="text-3xl font-bold text-gray-900">{appName}</h1>
+                {category && (
+                  <span className="inline-flex items-center rounded-full bg-blue-50 border border-blue-100 px-3 py-1.5 text-sm font-medium text-blue-700">
+                    {category}
+                  </span>
+                )}
+              </div>
+              {formattedDate && (
+                <p className="text-sm text-gray-500 sm:mt-0">
+                  Data fetched: {formattedDate}
+                </p>
+              )}
+            </div>
+            {domain && (
+              <a 
+                href={formatUrl(domain)} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-lg text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+              >
+                {domain}
+                <ExternalLink className="h-4 w-4" />
+              </a>
             )}
+            {vendorName && <p className="text-lg text-gray-600">{vendorName}</p>}
           </div>
 
-          {/* Trust Score Section - Only show if trust_score exists */}
-          {trustScore > 0 && (
-            <div className="flex flex-col items-center gap-6 border-t border-gray-100 pt-8">
-              <div className="text-center">
-                <h2 className="mb-2 text-2xl font-semibold text-gray-900">Trust Score</h2>
-                <p className="text-sm text-gray-600">
-                  Overall security and trustworthiness assessment
-                </p>
-              </div>
+          {/* Trust Score and Score Breakdown Section */}
+          {(trustScore > 0 || hasScoringBreakdown) && (
+            <div className="flex flex-col lg:flex-row gap-8 border-t border-gray-100 pt-8">
+              {/* Trust Score Section - Left Side */}
+              {trustScore > 0 && (
+                <div className="flex flex-col items-center gap-6 flex-shrink-0 lg:w-1/3">
+                  <div className="text-center">
+                    <h2 className="mb-2 text-2xl font-semibold text-gray-900">Trust Score</h2>
+                    <p className="text-sm text-gray-600">
+                      Overall security and trustworthiness assessment
+                    </p>
+                  </div>
 
-              <TrustScoreDial score={trustScore} size="lg" animated={true} />
-              <RiskLabel score={trustScore} label={riskLabel} size="lg" />
-            </div>
-          )}
+                  <TrustScoreDial score={trustScore} size="lg" animated={true} />
+                  <RiskLabel score={trustScore} label={riskLabel} size="lg" />
+                </div>
+              )}
 
-          {/* Confidence and Coverage - Only show if data exists */}
-          {(confidence > 0 || evidenceCoverage > 0) && (
-            <div className="mt-8 border-t border-gray-100 pt-8">
-              <EvidenceCoverageBadge
-                coverage={evidenceCoverage}
-                confidence={confidence}
-              />
-            </div>
-          )}
-
-          {/* Low Evidence Warning */}
-          {showLowEvidenceWarning && (
-            <div className="mt-6 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4">
-              <AlertTriangle className="h-5 w-5 flex-shrink-0 text-red-600 mt-0.5" />
-              <div>
-                <p className="text-red-900">Low Evidence Coverage</p>
-                <p className="mt-1 text-sm text-red-700">
-                  This assessment is based on incomplete public information. Some data sources
-                  were unavailable or limited. The trust score may not reflect the full security
-                  posture of this product.
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Score Breakdown - Only show if scoring_breakdown exists and has data */}
-        {hasScoringBreakdown && (
-          <div className="mb-8 rounded-xl border border-gray-200 bg-white p-8">
-            <h2 className="mb-6 text-xl font-semibold text-gray-900">Score Breakdown</h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {/* Score Breakdown - Right Side */}
+              {hasScoringBreakdown && (
+                <div className="flex-1">
+                  <h2 className="mb-6 text-xl font-semibold text-gray-900">Score Breakdown</h2>
+                  <div className="grid gap-4 sm:grid-cols-1">
               {Object.entries(scoringBreakdown).map(([key, value]) => {
                 const numValue = typeof value === 'number' ? value : 0;
                 // Handle both 0-1 scale (old) and 0-10 scale (new)
@@ -232,9 +258,37 @@ export function ResultsPage({ assessment, rawApiResponse, onBack }: ResultsPageP
                   </div>
                 );
               })}
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
-        )}
+          )}
+
+          {/* Confidence and Coverage - Only show if data exists */}
+          {(confidence > 0 || evidenceCoverage > 0) && (
+            <div className="mt-8 border-t border-gray-100 pt-8">
+              <EvidenceCoverageBadge
+                coverage={evidenceCoverage}
+                confidence={confidence}
+              />
+            </div>
+          )}
+
+          {/* Low Evidence Warning */}
+          {showLowEvidenceWarning && (
+            <div className="mt-6 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4">
+              <AlertTriangle className="h-5 w-5 flex-shrink-0 text-red-600 mt-0.5" />
+              <div>
+                <p className="text-red-900">Low Evidence Coverage</p>
+                <p className="mt-1 text-sm text-red-700">
+                  This assessment is based on incomplete public information. Some data sources
+                  were unavailable or limited. The trust score may not reflect the full security
+                  posture of this product.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Highlights Section - Show if highlights exist */}
         {highlights.length > 0 && (
