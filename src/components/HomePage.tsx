@@ -39,7 +39,7 @@ export function HomePage({ onAssess }: HomePageProps) {
   ];
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center bg-gradient-to-b from-blue-50/50 via-white to-gray-50 px-4 py-12">
+    <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center bg-gradient-to-b from-blue-50/50 via-white to-gray-50 p-4">
       <div className="w-full max-w-3xl">
         <div className="mb-10 text-center space-y-2">
           <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-blue-50 border border-blue-100 px-4 py-2 text-sm font-medium text-blue-700">
@@ -93,24 +93,30 @@ export function HomePage({ onAssess }: HomePageProps) {
           </div>
         </div>
 
-        <div className="mt-12 grid gap-6 sm:grid-cols-3">
+        <div className="mt-12 grid gap-4 sm:grid-cols-3">
           <div className="rounded-xl bg-white p-6 border border-gray-200">
-            <div className="mb-3 text-3xl">🔍</div>
+            <div className="flex items-center gap-2 justify-between">
             <h3 className="mb-2 text-lg font-semibold text-gray-900">Deep Analysis</h3>
+            <div className="mb-3 text-3xl">🔍</div>
+              </div>
             <p className="text-sm text-gray-600 leading-relaxed">
               Comprehensive evaluation of security posture, compliance, and risk factors
             </p>
           </div>
           <div className="rounded-xl bg-white p-6 border border-gray-200">
-            <div className="mb-3 text-3xl">📊</div>
+            <div className="flex items-center gap-2 justify-between">
             <h3 className="mb-2 text-lg font-semibold text-gray-900">Evidence-Based</h3>
+            <div className="mb-3 text-3xl">📊</div>
+              </div>
             <p className="text-sm text-gray-600 leading-relaxed">
               Scores derived from public data, CVEs, incidents, and compliance certifications
             </p>
           </div>
           <div className="rounded-xl bg-white p-6 border border-gray-200">
-            <div className="mb-3 text-3xl">⚡</div>
+            <div className="flex items-center gap-2 justify-between">
             <h3 className="mb-2 text-lg font-semibold text-gray-900">Instant Results</h3>
+            <div className="mb-3 text-3xl">⚡</div>
+              </div>
             <p className="text-sm text-gray-600 leading-relaxed">
               Get detailed security assessments and trust scores in seconds
             </p>
