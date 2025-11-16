@@ -10,6 +10,7 @@ import {
   Star,
   Briefcase,
   HelpCircle,
+  GitCompare,
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./ui/collapsible";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
@@ -25,6 +26,7 @@ interface ResultsPageProps {
   responseTimestamp?: string | null;
   fetchTime?: number | null;
   onBack: () => void;
+  onCompare?: (category: string) => void;
 }
 
 export function ResultsPage({
@@ -33,6 +35,7 @@ export function ResultsPage({
   responseTimestamp,
   fetchTime,
   onBack,
+  onCompare,
 }: ResultsPageProps) {
   const [copied, setCopied] = useState(false);
   const [rawJsonOpen, setRawJsonOpen] = useState(false);
@@ -226,9 +229,11 @@ The final score is rounded and clamped between 0 and 100. A separate **Confidenc
                   )}
                   <h1 className="text-3xl font-bold text-gray-900">{appName}</h1>
                   {category && (
-                    <span className="inline-flex items-center rounded-full bg-blue-50 border border-blue-100 px-3 py-1.5 text-sm font-medium text-blue-700">
-                      {category}
-                    </span>
+                    <>
+                      <span className="inline-flex items-center rounded-full bg-blue-50 border border-blue-100 px-3 py-1.5 text-sm font-medium text-blue-700">
+                        {category}
+                      </span>
+                    </>
                   )}
                 </div>
                 <div className="flex flex-col sm:items-end gap-1">
@@ -240,18 +245,33 @@ The final score is rounded and clamped between 0 and 100. A separate **Confidenc
                   )}
                 </div>
               </div>
-              {vendorName && <p className="text-lg text-gray-600">{vendorName}</p>}
-              {domain && (
-                <a
-                  href={formatUrl(domain)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-lg text-blue-600 hover:text-blue-800 hover:underline transition-colors"
-                >
-                  {domain}
-                  <ExternalLink className="h-4 w-4" />
-                </a>
-              )}
+              <div className="flex flex-row gap-2 w-full justify-between items-center">
+                <div className="flex flex-col gap-1 p-2">
+                  {vendorName && <p className="text-lg text-gray-600">{vendorName}</p>}
+                  {domain && (
+                    <a
+                      href={formatUrl(domain)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-lg text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                    >
+                      {domain}
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                  )}
+                </div>
+                <div>
+                  {onCompare && (
+                    <button
+                      onClick={() => onCompare(category)}
+                      className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
+                    >
+                      <GitCompare className="h-4 w-4" />
+                      Compare
+                    </button>
+                  )}
+                </div>{" "}
+              </div>
 
               <div className="flex flex-col gap-2">
                 {/* Description */}
@@ -297,7 +317,7 @@ The final score is rounded and clamped between 0 and 100. A separate **Confidenc
               <div className="flex flex-col lg:flex-row gap-8 border-t border-gray-100 pt-8">
                 {/* Trust Score Section - Left Side */}
                 {trustScore > 0 && (
-                  <div className="flex flex-col items-center gap-6 flex-shrink-0 lg:w-1/3">
+                  <div className="flex flex-col items-center gap-6 flex-shrink-0 lg:w-1/2 py-4">
                     <div className="text-center">
                       <div className="mb-2 flex items-center justify-center gap-2">
                         <h2 className="text-2xl font-semibold text-gray-900">Trust Score</h2>

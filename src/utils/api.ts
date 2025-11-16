@@ -62,7 +62,8 @@ export const assessProduct = async (input: string): Promise<AssessmentData> => {
     const text = await response.text();
     if (!text || text.trim().length === 0) {
       throw {
-        message: "Failed to find service with this name. Please try rephrasing your query or check the spelling.",
+        message:
+          "Failed to find service with this name. Please try rephrasing your query or check the spelling.",
         status: response.status,
       } as ApiError;
     }
@@ -72,17 +73,18 @@ export const assessProduct = async (input: string): Promise<AssessmentData> => {
       data = JSON.parse(text);
     } catch (parseError) {
       throw {
-        message: "Failed to find service with this name. Please try rephrasing your query or check the spelling.",
+        message:
+          "Failed to find service with this name. Please try rephrasing your query or check the spelling.",
         status: response.status,
       } as ApiError;
     }
-    
+
     // Transform n8n response to match AssessmentData interface
     // If the response already matches, return it directly
     // Otherwise, we may need to map fields based on actual n8n response structure
     // Store raw response for debugging (will be extracted in HomePage)
     (data as any)._rawResponse = JSON.parse(JSON.stringify(data));
-    
+
     return data as AssessmentData;
   } catch (error) {
     // Handle network errors or other fetch failures
@@ -90,7 +92,8 @@ export const assessProduct = async (input: string): Promise<AssessmentData> => {
       throw error;
     }
     throw {
-      message: error instanceof Error ? error.message : "Failed to assess product. Please try again.",
+      message:
+        error instanceof Error ? error.message : "Failed to assess product. Please try again.",
     } as ApiError;
   }
 };
@@ -114,3 +117,66 @@ export const getRiskBorderColor = (score: number): string => {
   return "border-red-200";
 };
 
+export interface CompareTool {
+  app_name?: string;
+  vendor_name?: string;
+  category?: string;
+  trust_score?: number;
+  confidence?: number;
+  evidence_coverage?: number;
+  risk_label?: string;
+  [key: string]: any; // Allow additional fields
+}
+
+/**
+ * Compare products in the same category
+ * @param category - Category name to compare
+ * @returns Array of tools in the same category
+ * @throws ApiError if the request fails
+ */
+export const compareProducts = async (category: string): Promise<CompareTool[]> => {
+  const compareUrl = `https://bubapower.app.n8n.cloud/webhook/compare?category=${encodeURIComponent(category)}`;
+
+  try {
+    const response = await fetch(compareUrl, {
+      method: "GET",
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw {
+        message: errorData.message || `API request failed with status ${response.status}`,
+        status: response.status,
+      } as ApiError;
+    }
+
+    const text = await response.text();
+    if (!text || text.trim().length === 0) {
+      throw {
+        message: "No tools found in this category.",
+        status: response.status,
+      } as ApiError;
+    }
+
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (parseError) {
+      throw {
+        message: "Failed to parse comparison results.",
+        status: response.status,
+      } as ApiError;
+    }
+
+    // Ensure we return an array
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    if (error && typeof error === "object" && "message" in error) {
+      throw error;
+    }
+    throw {
+      message:
+        error instanceof Error ? error.message : "Failed to compare products. Please try again.",
+    } as ApiError;
+  }
+};
