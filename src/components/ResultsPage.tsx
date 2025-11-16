@@ -127,6 +127,7 @@ The final score is rounded and clamped between 0 and 100. A separate **Confidenc
     return dateB - dateA; // Descending order (newest first)
   });
   const controlsEvidence = data?.controlsEvidence || (assessment as any)?.controlsEvidence || {};
+  const certifications = controlsEvidence?.certifications || [];
 
   // Extract new fields from controlsEvidence
   const usage = controlsEvidence?.usage || "";
@@ -566,10 +567,11 @@ The final score is rounded and clamped between 0 and 100. A separate **Confidenc
           {/* Security Evidence & CVE Stats - Show if data exists */}
           {(securityEvidence.hasSecurityTxt !== undefined ||
             Object.keys(cveStats).length > 0 ||
-            Object.keys(controlsEvidence).length > 0) && (
+            Object.keys(controlsEvidence).length > 0 ||
+            (Array.isArray(certifications) && certifications.length > 0)) && (
             <div className="rounded-xl border border-gray-200 bg-white p-8">
               <h2 className="mb-6 text-xl font-semibold text-gray-900">Security Details</h2>
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {/* Security Evidence */}
                 {securityEvidence.hasSecurityTxt !== undefined && (
                   <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
@@ -673,6 +675,21 @@ The final score is rounded and clamped between 0 and 100. A separate **Confidenc
                           </span>
                         </div>
                       )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Certifications */}
+                {Array.isArray(certifications) && certifications.length > 0 && (
+                  <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                    <h3 className="mb-3 text-sm font-semibold text-gray-900">Certifications</h3>
+                    <div className="space-y-2 text-sm">
+                      {certifications.map((cert: string, index: number) => (
+                        <div key={index} className="flex items-center justify-between">
+                          <span className="text-gray-600">{cert}</span>
+                          <span className="font-medium text-green-600">✓ Certified</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
