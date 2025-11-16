@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   ArrowLeft,
   AlertTriangle,
+  AlertCircle,
   Copy,
   Check,
   ChevronDown,
@@ -61,6 +62,12 @@ The final score is rounded and clamped between 0 and 100. A separate **Confidenc
   // Safely access fields with fallbacks - check rawApiResponse first since it has the actual data
   // Then fall back to assessment object
   const data = (rawApiResponse as any) || (assessment as any);
+
+  // Check if both vendor and product are null in the raw API response
+  const rawVendor = data?.vendor || data?.vendor_name || null;
+  const rawProduct = data?.product || data?.appName || data?.app_name || null;
+  const hasNoData =
+    (rawVendor === null || rawVendor === "") && (rawProduct === null || rawProduct === "");
 
   // Try multiple field name variations for vendor name
   const vendorName =
@@ -193,6 +200,36 @@ The final score is rounded and clamped between 0 and 100. A separate **Confidenc
       return dateString;
     }
   };
+
+  // Show simplified message if both vendor and product are null
+  if (hasNoData) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col gap-4">
+            <button
+              onClick={onBack}
+              className="flex items-center gap-2 text-gray-600 transition-colors hover:text-gray-900 cursor-pointer"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Search
+            </button>
+
+            <div className="rounded-xl border border-gray-200 bg-white p-8">
+              <div className="flex flex-col items-center justify-center gap-4 text-center">
+                <AlertCircle className="h-12 w-12 text-gray-400" />
+                <h2 className="text-2xl font-semibold text-gray-900">Insufficient Data</h2>
+                <p className="text-gray-600 max-w-md">
+                  We don't have enough information to assess this tool. Please try searching with a
+                  more specific product or vendor name.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
