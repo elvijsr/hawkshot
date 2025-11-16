@@ -4,7 +4,12 @@ import type { AssessmentData } from "../utils/api";
 import { assessProduct, type ApiError } from "../utils/api";
 
 interface HomePageProps {
-  onAssess: (assessment: AssessmentData, rawResponse?: unknown, responseTimestamp?: string, fetchTime?: number) => void;
+  onAssess: (
+    assessment: AssessmentData,
+    rawResponse?: unknown,
+    responseTimestamp?: string,
+    fetchTime?: number
+  ) => void;
 }
 
 const LOADING_MESSAGES = [
@@ -37,30 +42,42 @@ export function HomePage({ onAssess }: HomePageProps) {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [displayedText, setDisplayedText] = useState("Evaluate the Safety of Any Software Product");
   const [showCursor, setShowCursor] = useState(false);
+  const [currentPhase, setCurrentPhase] = useState<
+    "idle" | "erasing-original" | "typing" | "paused-after-typing" | "erasing-message"
+  >("idle");
   const startTimeRef = useRef<number | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const displayedTextRef = useRef<string>("Evaluate the Safety of Any Software Product");
   const animationRef = useRef<{
-    phase: 'idle' | 'erasing-original' | 'typing' | 'paused-after-typing' | 'erasing-message';
+    phase: "idle" | "erasing-original" | "typing" | "paused-after-typing" | "erasing-message";
     messageIndex: number;
     charIndex: number;
   }>({
-    phase: 'idle',
+    phase: "idle",
     messageIndex: 0,
     charIndex: 0,
   });
+  const animationStartedRef = useRef<boolean>(false);
+  const loadingRef = useRef<boolean>(false);
 
   // Timer effect - updates every 100ms when loading
   useEffect(() => {
+    loadingRef.current = loading;
+
     if (loading) {
       startTimeRef.current = Date.now();
       setElapsedTime(0);
-      setDisplayedText("Evaluate the Safety of Any Software Product");
+      const originalText = "Evaluate the Safety of Any Software Product";
+      setDisplayedText(originalText);
+      displayedTextRef.current = originalText;
+      setCurrentPhase("idle");
       animationRef.current = {
-        phase: 'idle',
+        phase: "idle",
         messageIndex: 0,
         charIndex: 0,
       };
-      
+      animationStartedRef.current = false;
+
       intervalRef.current = setInterval(() => {
         if (startTimeRef.current) {
           const elapsed = (Date.now() - startTimeRef.current) / 1000; // Convert to seconds
@@ -73,13 +90,17 @@ export function HomePage({ onAssess }: HomePageProps) {
         intervalRef.current = null;
       }
       startTimeRef.current = null;
-      setDisplayedText("Evaluate the Safety of Any Software Product");
+      const originalText = "Evaluate the Safety of Any Software Product";
+      setDisplayedText(originalText);
+      displayedTextRef.current = originalText;
       setShowCursor(false);
+      setCurrentPhase("idle");
       animationRef.current = {
-        phase: 'idle',
+        phase: "idle",
         messageIndex: 0,
         charIndex: 0,
       };
+      animationStartedRef.current = false;
     }
 
     return () => {
@@ -91,124 +112,184 @@ export function HomePage({ onAssess }: HomePageProps) {
 
   // Typing animation effect - starts after 3 seconds of loading
   useEffect(() => {
-    if (!loading || elapsedTime < 3) {
+    if (!loading || animationStartedRef.current) {
       return;
     }
 
-    const originalText = "Evaluate the Safety of Any Software Product";
-    const typingSpeed = 30; // ms per character
-    const erasingSpeed = 20; // ms per character (faster)
-    const pauseAfterTyping = 2000; // pause before erasing
-    const pauseAfterErasing = 500; // pause before next message
+    let checkTimeoutId: NodeJS.Timeout | null = null;
+    let animationCleanup: (() => void) | null = null;
 
-    let timeoutId: NodeJS.Timeout;
-    let isActive = true;
-
-    const animate = () => {
-      if (!isActive || !loading) {
+    // Check if 3 seconds have passed
+    const checkAndStart = () => {
+      if (!loadingRef.current || animationStartedRef.current) {
         return;
       }
 
-      const state = animationRef.current;
-      
-      if (state.phase === 'idle') {
-        // Start erasing original text
-        if (displayedText === originalText && displayedText.length > 0) {
-          state.phase = 'erasing-original';
-          timeoutId = setTimeout(() => {
-            if (isActive && loading) {
-              setDisplayedText(prev => prev.slice(0, -1));
-              animate();
-            }
-          }, erasingSpeed);
-        }
-      } else if (state.phase === 'erasing-original') {
-        // Continue erasing original text
-        if (displayedText.length > 0) {
-          timeoutId = setTimeout(() => {
-            if (isActive && loading) {
-              setDisplayedText(prev => prev.slice(0, -1));
-              animate();
-            }
-          }, erasingSpeed);
+      // Check elapsed time by comparing with startTimeRef
+      if (startTimeRef.current) {
+        const elapsed = (Date.now() - startTimeRef.current) / 1000;
+        if (elapsed >= 3) {
+          animationStartedRef.current = true;
+          animationCleanup = startAnimation();
         } else {
-          // Finished erasing, start typing a random message
-          state.phase = 'typing';
+          // Check again in 100ms
+          checkTimeoutId = setTimeout(checkAndStart, 100);
+        }
+      }
+    };
+
+    const startAnimation = () => {
+      const originalText = "Evaluate the Safety of Any Software Product";
+      const typingSpeed = 30; // ms per character
+      const erasingSpeed = 20; // ms per character (faster)
+      const pauseAfterTyping = 2000; // pause before erasing
+      const pauseAfterErasing = 500; // pause before next message
+
+      let timeoutId: NodeJS.Timeout | null = null;
+      let isActive = true;
+
+      const scheduleNext = (callback: () => void, delay: number) => {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+        timeoutId = setTimeout(() => {
+          if (isActive && loadingRef.current) {
+            callback();
+          }
+        }, delay);
+      };
+
+      const eraseCharacter = () => {
+        const current = displayedTextRef.current;
+        if (current && current.length > 0) {
+          const newText = current.slice(0, -1);
+          displayedTextRef.current = newText;
+          setDisplayedText(newText);
+          scheduleNext(eraseCharacter, erasingSpeed);
+        } else {
+          // Finished erasing, move to next message
+          const state = animationRef.current;
+          state.messageIndex = (state.messageIndex + 1) % LOADING_MESSAGES.length;
+          state.phase = "typing";
+          setCurrentPhase("typing");
+          state.charIndex = 0;
+          setShowCursor(true);
+          scheduleNext(() => {
+            const nextMessage = LOADING_MESSAGES[state.messageIndex];
+            if (nextMessage && nextMessage.length > 0) {
+              const newText = nextMessage[0];
+              displayedTextRef.current = newText;
+              setDisplayedText(newText);
+              state.charIndex = 1;
+              typeNextCharacter();
+            }
+          }, pauseAfterErasing);
+        }
+      };
+
+      const typeNextCharacter = () => {
+        const state = animationRef.current;
+        const message = LOADING_MESSAGES[state.messageIndex];
+
+        if (message && state.charIndex < message.length) {
+          const newText = message.slice(0, state.charIndex + 1);
+          displayedTextRef.current = newText;
+          setDisplayedText(newText);
+          state.charIndex++;
+          scheduleNext(typeNextCharacter, typingSpeed);
+        } else {
+          // Finished typing this message, pause then erase
+          setShowCursor(false);
+          state.phase = "paused-after-typing";
+          setCurrentPhase("paused-after-typing");
+          scheduleNext(() => {
+            state.phase = "erasing-message";
+            setCurrentPhase("erasing-message");
+            eraseCharacter();
+          }, pauseAfterTyping);
+        }
+      };
+
+      const eraseOriginal = () => {
+        const current = displayedTextRef.current;
+        if (current && current.length > 0) {
+          const newText = current.slice(0, -1);
+          displayedTextRef.current = newText;
+          setDisplayedText(newText);
+          scheduleNext(eraseOriginal, erasingSpeed);
+        } else {
+          // Finished erasing original, start typing first message
+          const state = animationRef.current;
+          state.phase = "typing";
+          setCurrentPhase("typing");
           state.messageIndex = Math.floor(Math.random() * LOADING_MESSAGES.length);
           state.charIndex = 0;
           setShowCursor(true);
-          timeoutId = setTimeout(() => {
-            if (isActive && loading) {
-              const message = LOADING_MESSAGES[state.messageIndex];
-              if (message && message.length > 0) {
-                setDisplayedText(message[0]);
-                state.charIndex = 1;
-                animate();
-              }
+          scheduleNext(() => {
+            const message = LOADING_MESSAGES[state.messageIndex];
+            if (message && message.length > 0) {
+              const newText = message[0];
+              displayedTextRef.current = newText;
+              setDisplayedText(newText);
+              state.charIndex = 1;
+              typeNextCharacter();
             }
           }, pauseAfterErasing);
         }
-      } else if (state.phase === 'typing') {
-        // Continue typing current message
-        const message = LOADING_MESSAGES[state.messageIndex];
-        if (message && state.charIndex < message.length) {
-          timeoutId = setTimeout(() => {
-            if (isActive && loading) {
-              setDisplayedText(message.slice(0, state.charIndex + 1));
-              state.charIndex++;
-              animate();
-            }
-          }, typingSpeed);
-        } else {
-          // Finished typing, pause then start erasing
-          setShowCursor(false);
-          state.phase = 'paused-after-typing';
-          timeoutId = setTimeout(() => {
-            if (isActive && loading) {
-              state.phase = 'erasing-message';
-              animate();
-            }
-          }, pauseAfterTyping);
+      };
+
+      const animate = () => {
+        if (!isActive || !loadingRef.current) {
+          return;
         }
-      } else if (state.phase === 'erasing-message') {
-        // Continue erasing current message
-        if (displayedText.length > 0) {
-          timeoutId = setTimeout(() => {
-            if (isActive && loading) {
-              setDisplayedText(prev => prev.slice(0, -1));
-              animate();
-            }
-          }, erasingSpeed);
-        } else {
-          // Finished erasing, move to next message and start typing
-          state.messageIndex = (state.messageIndex + 1) % LOADING_MESSAGES.length;
-          state.phase = 'typing';
-          state.charIndex = 0;
-          setShowCursor(true);
-          timeoutId = setTimeout(() => {
-            if (isActive && loading) {
-              const nextMessage = LOADING_MESSAGES[state.messageIndex];
-              if (nextMessage && nextMessage.length > 0) {
-                setDisplayedText(nextMessage[0]);
-                state.charIndex = 1;
-                animate();
-              }
-            }
-          }, pauseAfterErasing);
+
+        const state = animationRef.current;
+
+        if (state.phase === "idle") {
+          const currentText = displayedTextRef.current;
+          if (currentText === originalText && currentText.length > 0) {
+            state.phase = "erasing-original";
+            setCurrentPhase("erasing-original");
+            eraseOriginal();
+          }
+        } else if (state.phase === "erasing-original") {
+          eraseOriginal();
+        } else if (state.phase === "typing") {
+          // Typing is handled by scheduled callbacks, don't call typeNextCharacter here
+          // to avoid duplicate typing cycles
+        } else if (state.phase === "paused-after-typing") {
+          // This phase is handled by the timeout callback, no action needed here
+        } else if (state.phase === "erasing-message") {
+          eraseCharacter();
         }
-      }
+      };
+
+      // Start animation
+      animate();
+
+      return () => {
+        isActive = false;
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+      };
     };
 
-    // Start animation
-    animate();
+    // Start checking for 3-second threshold
+    checkAndStart();
 
     return () => {
-      isActive = false;
-      if (timeoutId) {
-        clearTimeout(timeoutId);
+      if (checkTimeoutId) {
+        clearTimeout(checkTimeoutId);
+        checkTimeoutId = null;
+      }
+      if (animationCleanup) {
+        animationCleanup();
+        animationCleanup = null;
       }
     };
-  }, [loading, elapsedTime, displayedText]);
+  }, [loading]);
 
   const formatTime = (seconds: number): string => {
     const wholeSeconds = Math.floor(seconds);
@@ -223,7 +304,7 @@ export function HomePage({ onAssess }: HomePageProps) {
     setError(null);
     setElapsedTime(0);
     const startTime = Date.now();
-    
+
     try {
       const result = await assessProduct(input);
       // Get raw response from the result if available, otherwise use result itself
@@ -237,8 +318,7 @@ export function HomePage({ onAssess }: HomePageProps) {
       console.error("Assessment failed:", err);
       const apiError = err as ApiError;
       setError(
-        apiError.message || 
-        "Failed to assess product. Please check your connection and try again."
+        apiError.message || "Failed to assess product. Please check your connection and try again."
       );
     } finally {
       setLoading(false);
@@ -258,16 +338,23 @@ export function HomePage({ onAssess }: HomePageProps) {
   ];
 
   return (
-    <div className={`flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center p-4 w-full transition-all duration-500 ${
-      loading ? 'bg-homepage-gradient-loading' : 'bg-homepage-gradient'
-    }`}>
+    <div
+      className={`flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center p-4 w-full transition-all duration-500 ${
+        loading ? "bg-homepage-gradient-loading" : "bg-homepage-gradient"
+      }`}
+    >
       <div className="w-full max-w-3xl space-y-4">
         <div className="mb-10 text-center gap-2">
           <div className="mb-5 inline-flex items-center gap-3 justify-center">
             <div className="text-2xl font-semibold min-h-[2rem] flex items-center">
               {displayedText}
-              {(loading && elapsedTime >= 3 && showCursor) && (
-                <span className="inline-block w-0.5 h-6 bg-gray-900 ml-1 animate-pulse">|</span>
+              {loading && elapsedTime >= 3 && showCursor && currentPhase === "typing" && (
+                <span
+                  key="typing-cursor"
+                  className="inline-block w-0.5 h-6 bg-gray-900 ml-1 animate-pulse"
+                >
+                  |
+                </span>
               )}
             </div>
           </div>
@@ -279,7 +366,9 @@ export function HomePage({ onAssess }: HomePageProps) {
           </label>
           <div className="flex gap-3">
             <div className="relative flex-1">
-              <Search className={`absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 transition-opacity ${loading ? 'opacity-50' : ''}`} />
+              <Search
+                className={`absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 transition-opacity ${loading ? "opacity-50" : ""}`}
+              />
               <input
                 id="product-input"
                 type="text"
@@ -322,17 +411,17 @@ export function HomePage({ onAssess }: HomePageProps) {
           )}
         </div>
         <div className="mt-6 flex flex-wrap items-center gap-2">
-            <span className="text-sm text-gray-500">Try:</span>
-            {examples.map((example) => (
-              <button
-                key={example.label}
-                onClick={() => setInput(example.value)}
-                className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-all hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
-              >
-                {example.label}
-              </button>
-            ))}
-          </div>
+          <span className="text-sm text-gray-500">Try:</span>
+          {examples.map((example) => (
+            <button
+              key={example.label}
+              onClick={() => setInput(example.value)}
+              className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-all hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
+            >
+              {example.label}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
