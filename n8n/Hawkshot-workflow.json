@@ -1,0 +1,1022 @@
+{
+  "name": "HawkShot workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "assess",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1120,
+        192
+      ],
+      "id": "64f58baa-f31d-4cc3-9b23-8681792c666a",
+      "name": "Webhook Assess",
+      "webhookId": "0585e88f-8dce-4945-a91d-fdd289229c21"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        976,
+        176
+      ],
+      "id": "04729aec-1df1-4ce4-acee-6317e2c298e4",
+      "name": "Respond Cached"
+    },
+    {
+      "parameters": {
+        "url": "={{\"https://\" + $json.website + \"/.well-known/security.txt\"}}",
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          },
+          "timeout": 5000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -688,
+        688
+      ],
+      "id": "651122b5-2742-4b53-aece-c138190fd198",
+      "name": "Fetch security.txt",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $items(\"Get mapped normalization response\")[0].json; // original from Basic Resolve Entity\nconst res = items[0];           // this node's input (HTTP result)\n\n\n\n// n8n's HTTP node puts response data in json.data or in json directly,\n// depending on settings. For simplicity, we just check HTTP statusCode.\nconst hasSecurityTxt = res.json ? true : false;\n\nreturn [{\n  json: {\n    query: prev.query,\n    website: prev.website,\n    product: prev.product,\n    vendor: prev.vendor,\n    securityEvidence: {\n      hasSecurityTxt\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        688
+      ],
+      "id": "eb926dc9-d9d7-4a01-bc22-58479405c0d9",
+      "name": "Parse Security Signals"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-5-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-5-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=You are a security and risk analyst. Your task is to analyze a software product based on the provided details, research it to understand its purpose and target market, and return a structured JSON response.\n\n**Inputs:**\n* Product name: `{{$json.product}}`\n* Vendor name: `{{$json.vendor}}`\n* Domain: `{{$json.website}}`\n\n**Instructions:**\n1.  First, research the product using the provided information to understand what it does, who its target audience is, and the vendor's general reputation.\n2.  Based on your research, determine the values for the keys listed in the \"Output\" section.\n3.  **For security features (SSO, MFA, RBAC, Audit Logs):** Use the following logic to determine the value:\n    * **\"yes\"**: The product is clearly enterprise-focused (e.g., SaaS CRM, HRIS, security tool) OR its website, documentation, or pricing tiers (e.g., \"Enterprise Plan\") explicitly mention the feature.\n    * **\"no\"**: The product is clearly a simple, free, or consumer-only tool that would not typically require advanced corporate security controls.\n    * **\"unknown\"**: The information cannot be found, or the product's target market is ambiguous (e.g., a \"prosumer\" tool) where support isn't standard.\n4.  **For the `category` key:** You **must** choose one of the exact string values from the list below. If no category is a good fit, use \"Other\".\n\n    **Allowed Categories:**\n    * \"AI / GenAI Tool\"\n    * \"Analytics / Business Intelligence\"\n    * \"API / Developer Tool\"\n    * \"CI/CD & DevOps\"\n    * \"Cloud Infrastructure (IaaS/PaaS)\"\n    * \"CMS (Content Management System)\"\n    * \"CRM (Customer Relationship Management)\"\n    * \"Customer Support / Help Desk\"\n    * \"Database\"\n    * \"Design Tool\"\n    * \"Document Collaboration\"\n    * \"E-commerce Platform\"\n    * \"Email & Communication\"\n    * \"Endpoint Security\"\n    * \"ERP (Enterprise Resource Planning)\"\n    * \"File Sharing & Storage\"\n    * \"Financial / Accounting\"\n    * \"HRIS (Human Resources)\"\n    * \"Identity & Access Management (IAM)\"\n    * \"IT Service Management (ITSM)\"\n    * \"Knowledge Base / Wiki\"\n    * \"Marketing Automation\"\n    * \"Monitoring & Observability\"\n    * \"Network Security\"\n    * \"Password Manager\"\n    * \"Payment Processing\"\n    * \"Project Management\"\n    * \"Sales Engagement\"\n    * \"Security (Other)\"\n    * \"Social Media Management\"\n    * \"Video Conferencing\"\n    * \"Other\"\n\n**Output:**\nAnswer in a **single, strict JSON object**. Do not include any other text, explanations, or markdown.\n\nThe JSON object must have **only** these keys:\n* `description`: A concise, one-sentence summary of what the product does.\n* `category`: The chosen category string from the list above.\n* `usage`: Describe the primary user base (e.g., \"Enterprise B2B\", \"Small Business\", \"Individual Consumer\", \"Marketing Teams\").\n* `vendor_reputation`: A brief assessment of the vendor (e.g., \"Established market leader\", \"New startup\", \"Well-regarded in security\", \"Unknown\").\n* `sso_supported`: Must be \"yes\", \"no\", or \"unknown\".\n* `mfa_supported`: Must be \"yes\", \"no\", or \"unknown\".\n* `rbac_supported`: Must be \"yes\", \"no\", or \"unknown\".\n* `audit_logs`: Must be \"yes\", \"no\", or \"unknown\"."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2,
+      "position": [
+        -752,
+        480
+      ],
+      "id": "46c64010-3e5f-42cc-8c08-d5bdcb54fa7e",
+      "name": "OpenAI: Controls Evidence",
+      "credentials": {
+        "openAiApi": {
+          "id": "bQdPU7J9u7gk3zFo",
+          "name": "elvijs oai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const { query, website, product, vendor } = $items(\"Get mapped normalization response\")[0].json;\nconst llm = JSON.parse(items[0].json.output[0].content[0].text.replace(/```json/, \"\").replace(/```/, \"\").trim());\n\nreturn [{\n  json: {\n    query,\n    website,\n    product,\n    vendor,\n    controlsEvidence: {\n      sso_supported: llm.sso_supported || 'unknown',\n      mfa_supported: llm.mfa_supported || 'unknown',\n      rbac_supported: llm.rbac_supported || 'unknown',\n      audit_logs: llm.audit_logs || 'unknown',\n      category: llm.category || 'unknown',\n      vendor_reputation: llm.vendor_reputation || 'unknown',\n      usage: llm.usage || 'unkown',\n      description: llm.description || 'unknown'\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        480
+      ],
+      "id": "6880330b-98a0-4319-81da-d2b1cd5cfd52",
+      "name": "Controls Parsed"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "numberInputs": 4,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -176,
+        848
+      ],
+      "id": "4fa0e143-78c4-4db3-b402-b10b859f6aa7",
+      "name": "Merge Evidence"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1-nano",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1-NANO"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are generating a short, CISO-ready trust brief for a software product.\nUse only the structured data provided, do NOT invent facts.\n\nInput JSON:\n\nquery\n\nproduct\n\nwebsite\n\nvendor\n\nsecurityEvidence\n\ncveStats\n\ncontrolsEvidence\n\ntrustScore (0–100)\n\nconfidence (0–1)\n\nevidenceCoverage (0–1)\n\nOutput strict JSON with:\n\nbrief_markdown: string\n\nhighlights: array of strings (3–5 bullets)\n\nIn the markdown, clearly state when there is insufficient evidence."
+            },
+            {
+              "content": "=Here is the input JSON: {{JSON.stringify($json)}}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2,
+      "position": [
+        272,
+        880
+      ],
+      "id": "0ec63fa1-307b-4b4c-a3e8-a4889c9ab9b4",
+      "name": "Generate Brief",
+      "credentials": {
+        "openAiApi": {
+          "id": "bQdPU7J9u7gk3zFo",
+          "name": "elvijs oai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const base = $items(\"Compute Score\")[0].json\nconst llm = JSON.parse(items[0].json.output[0].content[0].text.replace(/```json/, \"\").replace(/```/, \"\").trim());\n\nreturn [{\n  json: {\n    query: base.query,\n    website: base.website,\n    product: base.product,\n    vendor: base.vendor,\n    logo: base.logo,\n    category: base.category,\n    trust_score: base.trustScore,\n    confidence: base.confidence,\n    evidence_coverage: base.evidenceCoverage,\n    scoring_breakdown: base.scoringBreakdown,\n    brief_markdown: llm.brief_markdown,\n    highlights: llm.highlights,\n    // store raw evidence too\n    securityEvidence: base.securityEvidence,\n    cveStats: base.cveStats,\n    controlsEvidence: base.controlsEvidence\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        880
+      ],
+      "id": "35082c93-c133-4e8c-b264-3c5df5cce2cf",
+      "name": "Assemble Snapshot"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$vars.SUPABASE_URL}}/rest/v1/snapshots",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "={{ $json.query }}"
+            },
+            {
+              "name": "trust_score",
+              "value": "={{ $json.trust_score }}"
+            },
+            {
+              "name": "confidence",
+              "value": "={{ $json.confidence }}"
+            },
+            {
+              "name": "evidence_coverage",
+              "value": "={{ $json.evidence_coverage }}"
+            },
+            {
+              "name": "=scoring_breakdown",
+              "value": "={{ $json.scoring_breakdown }}"
+            },
+            {
+              "name": "brief_markdown",
+              "value": "={{ $json.brief_markdown }}"
+            },
+            {
+              "name": "product",
+              "value": "={{ $json.product }}"
+            },
+            {
+              "name": "vendor",
+              "value": "={{ $json.vendor }}"
+            },
+            {
+              "name": "website",
+              "value": "={{ $json.website }}"
+            },
+            {
+              "name": "securityEvidence",
+              "value": "={{ $json.securityEvidence }}"
+            },
+            {
+              "name": "highlights",
+              "value": "={{ $json.highlights }}"
+            },
+            {
+              "name": "cveStats",
+              "value": "={{ $json.cveStats }}"
+            },
+            {
+              "name": "controlsEvidence",
+              "value": "={{ $json.controlsEvidence }}"
+            },
+            {
+              "name": "logo",
+              "value": "={{ $json.logo }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        848,
+        784
+      ],
+      "id": "5346cb0e-5fa8-4d5c-8380-87e5335174b3",
+      "name": "Supabase Insert Snapshot",
+      "credentials": {
+        "supabaseApi": {
+          "id": "z9nUicqXKvd0DpvL",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        848,
+        976
+      ],
+      "id": "6a11905d-b95d-45fa-a92c-1e1895f00847",
+      "name": "Respond Fresh"
+    },
+    {
+      "parameters": {
+        "jsCode": "// cik dienas ieprieks ir recent\nconst RECENT_DAYS = 365;\n\n// --- helpers -------------------------------------------------------------\n\nfunction isRecent(dateStr, threshold) {\n  if (!dateStr) return false;\n  const d = new Date(dateStr);\n  if (Number.isNaN(d.getTime())) return false;\n  return d >= threshold;\n}\n\n// Try to find the highest CVSS baseScore for a single CVE,\n// handling both NVD 2.0-style metrics and some feed variations.\nfunction getMaxCvssFromCve(cve) {\n  let max = 0;\n  const metrics = cve.metrics;\n  if (!metrics) return max;\n\n  const metricObjs = [];\n\n  // Some feeds use an array, some use an object with cvssMetricV31/cvssMetricV30/etc\n  if (Array.isArray(metrics)) {\n    for (const m of metrics) {\n      if (m && typeof m === 'object') metricObjs.push(m);\n    }\n  } else if (typeof metrics === 'object') {\n    for (const val of Object.values(metrics)) {\n      if (Array.isArray(val)) {\n        metricObjs.push(...val);\n      } else if (val && typeof val === 'object') {\n        metricObjs.push(val);\n      }\n    }\n  }\n\n  for (const m of metricObjs) {\n    let score;\n\n    // NVD 2.0: cvssData.baseScore for v4/v3/v2\n    if (m.cvssData && typeof m.cvssData.baseScore === 'number') {\n      score = m.cvssData.baseScore;\n    }\n    // Some feeds flatten baseScore\n    else if (typeof m.baseScore === 'number') {\n      score = m.baseScore;\n    }\n    // Fallbacks for other known shapes (Mitre-style)\n    else if (m.cvssV3_1 && typeof m.cvssV3_1.baseScore === 'number') {\n      score = m.cvssV3_1.baseScore;\n    } else if (m.cvssV3_0 && typeof m.cvssV3_0.baseScore === 'number') {\n      score = m.cvssV3_0.baseScore;\n    } else if (m.cvssV2 && typeof m.cvssV2.baseScore === 'number') {\n      score = m.cvssV2.baseScore;\n    }\n\n    if (typeof score === 'number' && score > max) {\n      max = score;\n    }\n  }\n\n  return max;\n}\n\n// NVD 2.0 marks KEV membership via CISA fields; also allow a tag fallback.\nfunction isKev(cve) {\n  if (!cve) return false;\n\n  // NVD 2.0 KEV enrichment: these are only set if it's in CISA KEV\n  if (cve.cisaExploitAdd || cve.cisaVulnerabilityName || cve.cisaRequiredAction || cve.cisaActionDue) {\n    return true;\n  }\n\n  // Fallback: look for anything \"kev\" in cveTags tags\n  if (Array.isArray(cve.cveTags)) {\n    for (const tagObj of cve.cveTags) {\n      if (!tagObj || !Array.isArray(tagObj.tags)) continue;\n      for (const t of tagObj.tags) {\n        if (String(t).toLowerCase().includes('kev')) {\n          return true;\n        }\n      }\n    }\n  }\n\n  return false;\n}\n\n// --- aggregation logic ---------------------------------------------------\n\nconst now = new Date();\nconst recentThreshold = new Date(now.getTime() - RECENT_DAYS * 24 * 60 * 60 * 1000);\n\nlet totalResults = 0;\nlet recentCves = 0;\nlet maxCvss = 0;\nlet kevCount = 0;\nconst collectedCves = [];\n\n// Aggregate across all items (in case you ever paginate / merge pages)\nfor (const item of items) {\n  const body = item.json;\n  if (!body || !Array.isArray(body.vulnerabilities)) continue;\n\n  // NVD: totalResults is \"all matches\", not just this page\n  if (typeof body.totalResults === 'number') {\n    totalResults = Math.max(totalResults, body.totalResults);\n  }\n\n  for (const v of body.vulnerabilities) {\n    const cve = v.cve || {};\n    const pub = cve.published;\n    const mod = cve.lastModified;\n\n    if (isRecent(pub, recentThreshold) || isRecent(mod, recentThreshold)) {\n      recentCves++;\n    }\n\n    const cveMax = getMaxCvssFromCve(cve);\n    if (cveMax > maxCvss) {\n      maxCvss = cveMax;\n    }\n\n    if (isKev(cve)) {\n      kevCount++;\n    }\n\n    let firstRef = null;\n    if (Array.isArray(cve.references) && cve.references.length > 0) {\n      const ref = cve.references[0];\n      firstRef = {\n        url: ref.url,\n        source: ref.source,\n      };\n    }\n    const references = firstRef ? [firstRef] : [];\n\n    collectedCves.push({\n      id: cve.id,\n      published: pub,\n      lastModified: mod,\n      references,\n    });\n  }\n}\n\ncollectedCves.sort((a, b) => {\n  const aTime = new Date(a.lastModified || a.published || 0).getTime();\n  const bTime = new Date(b.lastModified || b.published || 0).getTime();\n  return bTime - aTime;\n});\n\nconst latestCves = collectedCves.slice(0, 5);\n\n// If totalResults is missing, just count what we saw\nif (!totalResults) {\n  let seen = 0;\n  for (const item of items) {\n    if (Array.isArray(item.json?.vulnerabilities)) {\n      seen += item.json.vulnerabilities.length;\n    }\n  }\n  totalResults = seen;\n}\n\nlet first = {};\ntry {\n  const mapped = $items(\"Get mapped normalization response\");\n  if (mapped && mapped.length > 0) {\n    first = mapped[0].json;\n  } else if (items.length > 0) {\n    first = items[0].json;\n  }\n} catch (error) {\n  // If the node has not been executed, fall back to current items\n  if (items.length > 0) {\n    first = items[0].json;\n  } else {\n    first = {};\n  }\n}\nconst query = first.query ?? '';\nconst website = first.website ?? '';\nconst product = first.product ?? '';\nconst vendor = first.vendor ?? '';\n\nreturn [\n  {\n    json: {\n      query,\n      website,\n      product,\n      vendor,\n      cveStats: {\n        totalCves: totalResults,\n        recentCves,\n        maxCvss: maxCvss || null,\n        kevCount,\n        latestCves,\n      },\n    },\n  },\n];\n"
+      },
+      "id": "fce067b9-a30f-45bb-9644-80b44e831209",
+      "name": "Parse NVD2",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        -400,
+        880
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Get the raw text string\nlet raw = items[0].json.output[0].content[0].text;\n\n// 2. Clean the string by replacing all non-breaking spaces (\\u00A0)\n//    with regular spaces (' ')\nconst cleanedString = raw.replace(/\\u00A0/g, ' ');\n\n// 3. Now, parse the cleaned, valid JSON string\nconst parsed = JSON.parse(cleanedString);\n\n// 4. Return the data you need\nreturn [\n  {\n    product: parsed.product,\n    vendor: parsed.vendor,\n    website: parsed.website\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        128,
+        264
+      ],
+      "id": "07755bcf-79e6-4ac8-8361-d03dca4eb3e8",
+      "name": "Map response"
+    },
+    {
+      "parameters": {
+        "url": "={{$vars.SUPABASE_URL}}/rest/v1/snapshots",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "=eq.{{ $json.body.query }}"
+            },
+            {
+              "name": "order",
+              "value": "created_at.desc"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -896,
+        192
+      ],
+      "id": "5df41f30-f5b8-4406-bb52-070b52dcfbe7",
+      "name": "Supabase: Get cached snapshot by query HTTP",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "z9nUicqXKvd0DpvL",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = items[0].json;\n\nif (item.id) {\n  return [{\n    json: item\n  }];\n}\n\n// No snapshot found\nreturn [{\n  json: {\n    \"id\": \"\"\n  }   // empty object\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -672,
+        192
+      ],
+      "id": "66b13e4f-1374-45f3-85a6-62198c9463af",
+      "name": "Pick Latest Snapshot by query",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "url": "={{$vars.SUPABASE_URL}}/rest/v1/snapshots",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "product",
+              "value": "=eq.{{ $json.product }}"
+            },
+            {
+              "name": "order",
+              "value": "created_at.desc"
+            },
+            {
+              "name": "vendor",
+              "value": "=eq.{{ $json.vendor }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        352,
+        264
+      ],
+      "id": "81c85313-8bd8-48a5-a9a7-23ece9072e0b",
+      "name": "Supabase: Get cached snapshot by product HTTP",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "z9nUicqXKvd0DpvL",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = items[0].json;\n\nif (item.id) {\n  return [{\n    json: item\n  }];\n}\n\n// No snapshot found\nreturn [{\n  json: {\n    \"id\": \"\"\n  }   // empty object\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        576,
+        264
+      ],
+      "id": "8396eb0c-673b-4003-b2b4-e86f7e9ad86e",
+      "name": "Pick Latest Snapshot by product",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-5-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-5-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are an expert entity resolution API for a cybersecurity application. Your single task is to analyze a user's query and classify it. The query could be a software product, a vendor, a human author, a project name, or a URL.\n\nYou MUST respond ONLY with a single, valid JSON object. Do not add any explanatory text, markdown, or pre-amble.\n\nThe JSON object MUST conform to the following schema:\n{\n  \"query\": \"The original user query\",\n  \"product\": \"The normalized product name if type is 'product', otherwise null\",\n  \"vendor\": \"The normalized vendor, author, or project name (e.g., 'JetBrains', 'Igor Pavlov', 'Meta'). Null only if truly unknown.\",\n  \"website\": \"The canonical root domain for the vendor (e.g., 'jetbrains.com', 'meta.com'), or the domain from the URL. Null only if unknown.\",\n  \"error\": \"Null if there are no problems, explanation of the problem if query is unclear\"\n}\n\nGUIDING PRINCIPLES:\n\n1.  **SOFTWARE BIAS (COMMON NOUN RULE):** Your primary context is **software and cybersecurity**. If a query is a common English word but *also* the name of a known software product, vendor, or project (e.g., **\"Cursor\"**, \"Postman\", \"Obsidian\", \"Warp\"), you **MUST** assume the user means the software entity.\n2.  **SPECIFICITY OVER AMBIGUITY:** Do not use the \"error\" field for ambiguity if a plausible software-related interpretation exists. Prefer to find the *most likely* software entity.\n3.  **RESOLVE, DON'T JUST PARSE:** Your goal is entity *resolution*. Do not just parse the user's query string. If the query is a domain, you must identify the company/product *behind* that domain.\n\nRULES:\n\n1.  **If the query is a PRODUCT** (e.g., \"WebStorm\", \"7-Zip\", \"Inkscape\", \"React\", \"curl\", **\"Cursor\"**):\n    * Set `product` to the normalized product name.\n    * Identify the `vendor`. This can be a company (\"JetBrains\"), a human author (\"Igor Pavlov\"), or a project (\"Inkscape project\").\n    * Find the vendor's main, *canonical* `website` domain (e.g., \"jetbrains.com\", \"7-zip.org\", \"inkscape.org\", **\"cursor.sh\"**).\n    * Normalize vendor names (e.g., \"Foxit Software Inc.\" and \"Foxit Corporation\" should both become \"Foxit\").\n\n2.  **Libraries, Frameworks, and Projects ARE Products:**\n    * This is a clarification of Rule 1. Treat queries for software libraries (e.g., \"React\", \"jQuery\"), frameworks (e.g., \"Angular\", \"Django\"), and named open-source projects (e.g., \"curl\", \"OBS Studio\") as **product** queries.\n    * The `product` field MUST be the software name (e.g., \"React\", \"Angular\", \"curl\").\n    * The `vendor` field should be the primary maintaining organization or author (e.g., \"Meta\" for React, \"Google\" for Angular, \"The curl project\" for curl).\n\n3.  **If the query is a VENDOR or AUTHOR** (e.g., \"JetBrains\", \"Igor Pavlov\", \"Palo Alto Networks\", \"Meta\"):\n    * This rule applies when the query *is* the name of the company, organization, or person that *makes* software, not the software itself.\n    * Set `vendor` to the normalized name.\n    * Find the vendor's main `website` domain (e.g., \"jetbrains.com\", \"paloaltonetworks.com\", \"meta.com\").\n    * Set `product` to `null`.\n\n4.  **If the query is a standard URL or domain** (e.g., \"https://www.jetbrains.com/webstorm\", \"cursor.com\"):\n    * **Resolve the entity (vendor/product) from the domain.** Do not just parse the string.\n    * Set `vendor` to the normalized name of the entity that owns the domain (e.g., \"JetBrains\" from \"jetbrains.com\", \"Cursor\" from \"cursor.com\").\n    * Try to infer the `product` from the domain or path (e.g., \"WebStorm\" from path, \"Cursor\" from domain).\n    * **Find the canonical website for the resolved vendor.** The `website` field MUST be this canonical, official domain, even if the user's query used a different one.\n    * **Example:** If the query is \"cursor.com\" (which is not their main site), the model must resolve the vendor as \"Cursor\", the product as \"Cursor\", and set the *canonical* `website` to **\"cursor.sh\"**.\n\n5.  **SPECIAL URL RULE (GitHub, GitLab):** If the query is a URL to a code repository (e.g., \"https://github.com/obs-studio/obs-studio\"):\n    * Set `product` to the normalized product name (e.g., \"OBS Studio\" or \"obs-studio\").\n    * Set `vendor` to the organization or user who owns the repo (e.g., \"OBS Project\" or \"obs-studio\").\n    * Try to find the vendor's canonical `website` (e.g., \"obsproject.com\"). If not findable, the GitHub domain is *not* the website.\n    * **Do NOT set the vendor as 'GitHub' or 'GitLab'.**\n\n6.  **If the query is TRULY unclear** (e.g., \"security\", \"downloads\", \"a program\") and **cannot** be reasonably resolved to a specific software entity, set all other fields to null.\n    * Populate \"error\" field with reason why you think it's unclear.\n\n7.  **If product and vendor share a name** (e.g., \"Slack\", \"Cursor\", \"Obsidian\"), you MUST fill both the `product` and `vendor` fields with the normalized name.\n\n8.  If query is similar to real product or company name (for example string \"slack1\" should correspond to Slack) or has any typos, then fall back to the most likely product or company name."
+            },
+            {
+              "content": "={{ $items(\"Webhook Assess\")[0].json.body.query }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2,
+      "position": [
+        -224,
+        264
+      ],
+      "id": "668c6d7a-5831-4a2d-bdd1-810d29160a1e",
+      "name": "OpenAI: Query normalization",
+      "credentials": {
+        "openAiApi": {
+          "id": "bQdPU7J9u7gk3zFo",
+          "name": "elvijs oai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const query = $items(\"Webhook Assess\")[0].json.body.query;\nconst resp = $items(\"Map response\")[0].json;\n\nreturn [{\n  query: query,\n  product: resp.product,\n  vendor: resp.vendor,\n  website: resp.website\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1200,
+        784
+      ],
+      "id": "290bd1aa-ea5e-40a3-a2c1-878aa220dab4",
+      "name": "Get mapped normalization response"
+    },
+    {
+      "parameters": {
+        "jsCode": "const { query, website, product, vendor, securityEvidence, cveStats, controlsEvidence } = items[0].json;\n\nconst sec = securityEvidence || {};\nconst cve = cveStats || { totalCves: 0, recentCves: 0, maxCvss: 0, kevCount: 0 };\nconst controls = controlsEvidence || {};\n\nfunction scoreTransparency(sec) {\n  let s = 0;\n  if (sec.hasSecurityTxt) s += 5;\n  // You can add more fields later\n  return Math.min(s, 10);\n}\n\nfunction scoreControls(controls) {\n  const yes = v => v === 'yes' || v === true;\n  let s = 0;\n  if (yes(controls.sso_supported)) s += 3;\n  if (yes(controls.mfa_supported)) s += 3;\n  if (yes(controls.rbac_supported)) s += 2;\n  if (yes(controls.audit_logs)) s += 2;\n  return Math.min(s, 10);\n}\n\nfunction scoreCveRisk(cve) {\n  if (!cve.totalCves) return 0;\n  let risk = 0;\n  risk += Math.min(cve.totalCves, 10) * 0.4;      // 0–4\n  risk += Math.min(cve.recentCves || 0, 5) * 0.8; // 0–4\n  risk += Math.max((cve.maxCvss || 0) - 7, 0);    // 0–3\n  risk += (cve.kevCount || 0) * 2;                // KEV penalty\n  return Math.min(risk, 10);\n}\n\nconst transparencyScore = scoreTransparency(sec);      // 0–10\nconst controlsScore = scoreControls(controls);         // 0–10\nconst cveRisk = scoreCveRisk(cve);                     // 0–10\n\nlet trustScore = 50;\ntrustScore += transparencyScore * 2;  // up to +20\ntrustScore += controlsScore * 2;      // up to +20\ntrustScore -= cveRisk * 3;            // up to -30\n\ntrustScore = Math.max(0, Math.min(100, Math.round(trustScore)));\n\n// Evidence coverage (super simple)\nlet dims = 3;\nlet present = 0;\nif (sec && Object.keys(sec).length > 0) present++;\nif (cve && cve.totalCves !== undefined) present++;\nif (controls && Object.keys(controls).length > 0) present++;\nconst evidenceCoverage = present / dims;\n\nconst confidence = Math.round(evidenceCoverage * 100) / 100;\n\nreturn [{\n  json: {\n    query,\n    website,\n    product,\n    vendor,\n    securityEvidence: sec,\n    cveStats: cve,\n    controlsEvidence: controls,\n    trustScore,\n    confidence,\n    evidenceCoverage,\n    scoringBreakdown: {\n      transparencyScore,\n      controlsScore,\n      cveRisk\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1696,
+        1392
+      ],
+      "id": "0c7fb00f-28b7-412a-b94f-78de836f04c5",
+      "name": "Compute Score old"
+    },
+    {
+      "parameters": {
+        "jsCode": "const { query, website, category, product, vendor, logo, securityEvidence, cveStats, controlsEvidence } = items[0].json;\n\nconst sec = securityEvidence || {};\nconst cve = cveStats || { totalCves: 0, recentCves: 0, maxCvss: 0, kevCount: 0, latestCves: 0 };\nconst controls = controlsEvidence || {};\n\nfunction scoreTransparency(sec) {\n  let s = 0;\n  if (sec.hasSecurityTxt) s += 10;\n  // You can add more fields later\n  return Math.min(s, 10);\n}\n\nfunction scoreControls(controls) {\n  const yes = v => v === 'yes' || v === true;\n  let s = 0;\n  if (yes(controls.sso_supported)) s += 3;\n  if (yes(controls.mfa_supported)) s += 3;\n  if (yes(controls.rbac_supported)) s += 2;\n  if (yes(controls.audit_logs)) s += 2;\n  return Math.min(s, 10);\n}\n\n// function scoreCveRisk(cve) {\n//   if (!cve.totalCves) return 0;\n//   let risk = 0;\n//   risk += Math.min(cve.totalCves, 10) * 0.4;      // 0–4\n//   risk += Math.min(cve.recentCves || 0, 5) * 0.8; // 0–4\n//   risk += Math.max((cve.maxCvss || 0) - 7, 0);    // 0–3\n//   risk += (cve.kevCount || 0) * 2;                // KEV penalty\n//   return Math.min(risk, 10);\n// }\n\nfunction scoreCveRisk(cve) {\n  // Normalize metrics to 0–1 ranges\n  const normTotal = Math.min(cve.totalCves / 100, 1);      // cap at 100 CVEs\n  const normRecent = Math.min(cve.recentCves / 20, 1);     // cap at 20 recent CVEs\n  const normCvss = Math.min(cve.maxCvss / 10, 1);          // CVSS is already 0–10\n  const normKev = Math.min(cve.kevCount / 5, 1);           // cap at 5 KEVs\n\n  // Weighted score (weights sum to 1)\n  const weights = {\n    total: 0.2,\n    recent: 0.35,\n    cvss: 0.25,\n    kev: 0.2\n  };\n\n  const risk =\n    weights.total * normTotal +\n    weights.recent * normRecent +\n    weights.cvss * normCvss +\n    weights.kev * normKev;\n\n  // Convert to 0–10 scale\n  return Number((risk * 10).toFixed(2));\n}\n\nconst transparencyScore = scoreTransparency(sec);      // 0–10\nconst controlsScore = scoreControls(controls);         // 0–10\nconst cveRisk = scoreCveRisk(cve);                     // 0–10\n\nlet trustScore = 50;\ntrustScore += transparencyScore * 2;  // up to +20\ntrustScore += controlsScore * 2;      // up to +20\ntrustScore -= cveRisk * 3;            // up to -30\n\ntrustScore = Math.max(0, Math.min(100, Math.round(trustScore)));\n\n// Evidence coverage (super simple)\nlet dims = 3;\nlet present = 0;\nif (sec && Object.keys(sec).length > 0) present++;\nif (cve && cve.totalCves !== undefined) present++;\nif (controls && Object.keys(controls).length > 0) present++;\nconst evidenceCoverage = present / dims;\n\nconst confidence = Math.round(evidenceCoverage * 100) / 100;\n\n/**\n * https://community.n8n.io/t/round-up-decimals/3607\n * @param {any} obj\n * @returns {any}\n */\nfunction roundNumbers(obj) {\n  if (Array.isArray(obj)) {\n    return obj.map(roundNumbers);\n  } else if (obj && typeof obj === 'object') {\n    return Object.fromEntries(\n      Object.entries(obj).map(([k, v]) => [k, roundNumbers(v)])\n    );\n  } else if (typeof obj === 'number') {\n    return parseFloat(obj.toFixed(2));\n  }\n  return obj;\n}\n\nconst payload = {\n  query,\n  website,\n  product,\n  vendor,\n  logo,\n  category,\n  securityEvidence: sec,\n  cveStats: cve,\n  controlsEvidence: controls,\n  trustScore,\n  confidence,\n  evidenceCoverage,\n  scoringBreakdown: {\n    transparencyScore,\n    controlsScore,\n    cveRisk\n  }\n};\n\nreturn [{\n  json: roundNumbers(payload)\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        48,
+        880
+      ],
+      "id": "46ac41f4-4490-4aa3-833c-0d2cd7860f0c",
+      "name": "Compute Score"
+    },
+    {
+      "parameters": {
+        "url": "https://services.nvd.nist.gov/rest/json/cves/2.0",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "keywordSearch",
+              "value": "={{$json.product ? $json.product : $json.vendor }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -688,
+        880
+      ],
+      "id": "1d6dc98f-89eb-4c11-b5cd-6a1f6a47cb25",
+      "name": "get NVD stats"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "74b70c34-e682-4a28-8c41-8b7ab7d31139",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "false",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        800,
+        264
+      ],
+      "id": "e4899970-6527-42a6-bcb1-9753da9d9ebc",
+      "name": "Has Snapshot by product?",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "74b70c34-e682-4a28-8c41-8b7ab7d31139",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "false",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -448,
+        192
+      ],
+      "id": "5445f19b-01a0-4182-a70d-02f2fb8593bd",
+      "name": "Has Snapshot by query?",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "jsCode": "async function run() {\n    const domain = items[0].json.website;\n    const logoUrl = `https://img.logo.dev/${domain}?token=${$vars.LOGO_DEV_KEY}`;\n\n    try {\n        const res = await this.helpers.httpRequest({\n            url: logoUrl,\n            method: 'HEAD',\n            returnFullResponse: true,\n            ignoreHttpStatusErrors: true,\n        });\n\n      console.log(res)\n\n        return {\n            logo: res.statusCode === 200 ? logoUrl : null\n        };\n\n    } catch (error) {\n        return {\n            logo: null\n        };\n    }\n}\n\nreturn run();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1696,
+        1552
+      ],
+      "id": "aa3f53a1-f9e7-4de5-906f-af1900e4f967",
+      "name": "Generate logo"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {
+          "includeUnpaired": true
+        }
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -400,
+        1248
+      ],
+      "id": "a678ed26-89be-4e82-a782-15c8c0280e40",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "url": "=https://img.logo.dev/{{$json.website}}?token={{$vars.LOGO_DEV_KEY}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -976,
+        1248
+      ],
+      "id": "4d5b092c-40b6-4926-bf4c-fc81894130d3",
+      "name": "Check logo",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const website = $items(\"Get mapped normalization response\")[0].json.website;\n\nreturn [{\n  logo: `https://img.logo.dev/${website}?token=${$vars.LOGO_DEV_KEY}`\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -688,
+        1072
+      ],
+      "id": "a6c3d8d2-6f7d-4380-9a20-f85599e138f9",
+      "name": "Pass logo"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  logo: null\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -688,
+        1264
+      ],
+      "id": "f8e00556-7d2c-44de-90e4-bc945243c4b2",
+      "name": "Fallback logo"
+    }
+  ],
+  "pinData": {
+    "Webhook Assess": [
+      {
+        "json": {
+          "headers": {
+            "host": "bubapower.app.n8n.cloud",
+            "user-agent": "curl/8.5.0",
+            "content-length": "17",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "79.76.43.217",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "SE",
+            "cf-ray": "99eec10eb3dc2d7a-ARN",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "x-forwarded-for": "79.76.43.217, 162.158.182.100",
+            "x-forwarded-host": "bubapower.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-96-57f65f45bd-8jt4k",
+            "x-is-trusted": "yes",
+            "x-real-ip": "79.76.43.217"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "query": "adobbe"
+          },
+          "webhookUrl": "https://bubapower.app.n8n.cloud/webhook-test/assess",
+          "executionMode": "test"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook Assess": {
+      "main": [
+        [
+          {
+            "node": "Supabase: Get cached snapshot by query HTTP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch security.txt": {
+      "main": [
+        [
+          {
+            "node": "Parse Security Signals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Security Signals": {
+      "main": [
+        [
+          {
+            "node": "Merge Evidence",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI: Controls Evidence": {
+      "main": [
+        [
+          {
+            "node": "Controls Parsed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Controls Parsed": {
+      "main": [
+        [
+          {
+            "node": "Merge Evidence",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge Evidence": {
+      "main": [
+        [
+          {
+            "node": "Compute Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Brief": {
+      "main": [
+        [
+          {
+            "node": "Assemble Snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assemble Snapshot": {
+      "main": [
+        [
+          {
+            "node": "Supabase Insert Snapshot",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Respond Fresh",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Insert Snapshot": {
+      "main": [
+        []
+      ]
+    },
+    "Parse NVD2": {
+      "main": [
+        [
+          {
+            "node": "Merge Evidence",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Map response": {
+      "main": [
+        [
+          {
+            "node": "Supabase: Get cached snapshot by product HTTP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: Get cached snapshot by query HTTP": {
+      "main": [
+        [
+          {
+            "node": "Pick Latest Snapshot by query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick Latest Snapshot by query": {
+      "main": [
+        [
+          {
+            "node": "Has Snapshot by query?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: Get cached snapshot by product HTTP": {
+      "main": [
+        [
+          {
+            "node": "Pick Latest Snapshot by product",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick Latest Snapshot by product": {
+      "main": [
+        [
+          {
+            "node": "Has Snapshot by product?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI: Query normalization": {
+      "main": [
+        [
+          {
+            "node": "Map response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get mapped normalization response": {
+      "main": [
+        [
+          {
+            "node": "OpenAI: Controls Evidence",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch security.txt",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "get NVD stats",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Check logo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute Score old": {
+      "main": [
+        []
+      ]
+    },
+    "Compute Score": {
+      "main": [
+        [
+          {
+            "node": "Generate Brief",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get NVD stats": {
+      "main": [
+        [
+          {
+            "node": "Parse NVD2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Snapshot by product?": {
+      "main": [
+        [
+          {
+            "node": "Respond Cached",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get mapped normalization response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Snapshot by query?": {
+      "main": [
+        [
+          {
+            "node": "Respond Cached",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "OpenAI: Query normalization",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate logo": {
+      "main": [
+        []
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Merge Evidence",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Check logo": {
+      "main": [
+        [
+          {
+            "node": "Pass logo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fallback logo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pass logo": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fallback logo": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a93ea6d1-ea3d-4176-ac7f-85d2e95892d7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "aaae3d4f90170a7ffeea34f432ac0438639be07eaa6b4d48ccb6391e9c8bf802"
+  },
+  "id": "JUnJ7MPFoOREAwxC",
+  "tags": []
+}
